@@ -23,7 +23,7 @@ FoamFile
 //
 // On the debug mesh this configuration delivers Phi convergence in
 // 2-5 iterations/step (vs 320-400 with the OpenFOAM-default PCG/DIC),
-// a ~100x reduction.  See report finding #25.
+// a ~100x reduction.  
 //
 // Tolerances are tightened slightly compared to debug because cluster
 // runs span 10x more time steps and the cumulative continuity drift
