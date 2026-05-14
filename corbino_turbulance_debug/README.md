@@ -1,15 +1,14 @@
 # corbino_turbulance_debug — laptop wiring case
 
 This is a **deliberately under-resolved** sibling of `corbino_turbulance/`,
-intended to run on a laptop (8 cores, ≤16 GB RAM) for the sole purpose of
+intended to run on a laptop (≤16 GB RAM) for the sole purpose of
 shaking down the case wiring before the production DNS is queued on a
 cluster.
 
 > **Not a physics-grade mesh.**  ~1 cell across `δ_H ≈ 53 µm`, vs the DNS
-> requirement of ≥5 cells.  Do **not** use for spectra, GCI, or any
-> thesis figure.
+> requirement of ≥5 cells.  
 
-## What it is *for*
+## It is *for*
 
   - Verifying `blockMesh` / `checkMesh` topology and patch identity.
   - Exercising `decomposePar` (Scotch, 8 ranks).
@@ -20,19 +19,18 @@ cluster.
   - Smoke-testing the post-processing pipeline (paraview / pyFoam /
     FFT scripts).
 
-## What it is *not* for
+## It is *not* for
 
   - Quantitative spectra `E(k_θ)`, Reynolds stresses, dissipation budgets.
   - GCI / mesh-convergence study (use the coarse/medium/fine variants
-    in `corbino_turbulance/`, Phase 7).
-  - Any numerical result that lands in the thesis.
+    in `corbino_turbulance/`).
+  - Any publishable  result 
 
 ## Sizing
 
   - Cells per block: 200 × 96 × 30  (vs production 600 × 384 × 70).
   - Total: 4 × 200 × 96 × 30 = **2.304 × 10⁶ cells** (~28× smaller).
-  - Working set: ~3.5 GB at ~1.5 KB/cell → fits laptop RAM comfortably.
-  - Decomposition: 8 Scotch subdomains → ~0.29 M cells / rank.
+
 
 ## z-grading (relaxed)
 
