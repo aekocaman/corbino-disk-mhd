@@ -14,12 +14,10 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// Step-1 mesh: full 360-degree Corbino annulus (no wedge symmetry).
 //
 // Topology: 4 hex blocks, one per quadrant, sharing 16 vertices.
 // Each block's local (x, y, z) maps to (+r, +theta, +z) in the right-handed
-// sense -- this avoids the "Small Determinant" Jacobian collapse that hit
-// the wedge mesh when an arc edge was reversed.
+// sense. This avoided  the "Small Determinant" Jacobian collapse that was once a problem.
 //
 // Geometry (all in mm; converted to m by convertToMeters 0.001):
 //   r_in  = 20 mm  (inner electrode)
@@ -31,18 +29,6 @@ FoamFile
 //   delta_Ha = h/Ha ~ 0.053 mm   (Ha ~ 190 for Galinstan at B = 0.5 T)
 //   HLR = delta_Ha / dz_wall >= 8   =>   dz_wall <= 6.6 um
 //
-// Hyperbolic z-grading is symmetric about z = h/2, with first cell ~6.5 um at
-// each insulating plate (Hartmann layer) growing geometrically to ~2.9 mm at
-// the core.  With 16 z-cells (8 per half) we use a steeper expansion ratio
-// to preserve the wall HLR target while halving the total cell count from
-// the original 32-cell mesh.  Multi-grading syntax does this in one block:
-//      simpleGrading (1 1 ((0.5 0.5 450) (0.5 0.5 0.00222)))
-// - segment 1: lower 50% of z, 50% of cells, last/first ratio = 450
-// - segment 2: upper 50% of z, 50% of cells, ratio = 1/450 (mirror)
-//
-// Trade-off:  the bulk z-resolution is now ~2.9 mm at midplane (vs 1.5 mm in
-// the 32-cell version).  Aspect ratio at midplane is ~3:1, acceptable for
-// the laminar baseline but should be refined for higher-Re or turbulent runs.
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -80,14 +66,7 @@ vertices
     (   0 -100   10)  // 15
 );
 
-// ---------------------------------------------------------------------------
-// Blocks
-// Each hex follows the OpenFOAM convention:
-//   (v0 v1 v2 v3  v4 v5 v6 v7)  with  local +x = v0->v1,
-//                                     local +y = v0->v3,
-//                                     local +z = v0->v4.
-// We force local x = +r (radial out), local y = +theta (CCW), local z = +z.
-// ---------------------------------------------------------------------------
+--------------------------------------------------------------------------
 blocks
 (
     // Block Q1 :  theta in [  0,  90]
@@ -111,14 +90,7 @@ blocks
         simpleGrading (1 1 ((0.5 0.5 450) (0.5 0.5 0.00222)))
 );
 
-// ---------------------------------------------------------------------------
-// Edges
-// Each pair of consecutive ring vertices is joined by a circular arc whose
-// midpoint sits on the corresponding cylinder.  The midpoint of a 90-degree
-// arc at radius R lies at (R cos 45, R sin 45) = (R/sqrt 2, R/sqrt 2).
-//   inner cylinder midpoint magnitude = 20 / sqrt 2 ~ 14.142
-//   outer cylinder midpoint magnitude = 100 / sqrt 2 ~ 70.711
-// ---------------------------------------------------------------------------
+ ---------------------------------------------------------------------------
 edges
 (
     // -- Inner cylinder, z = 0 --
@@ -146,21 +118,7 @@ edges
     arc 15 12 ( 70.7107 -70.7107  10)
 );
 
-// ---------------------------------------------------------------------------
-// Boundary patches
-// Three patches survive the wedge -> 360 transition:
-//   innerElectrode   (r = r_in,  fixed potential, no slip)
-//   outerElectrode   (r = r_out, ground V = 0,    no slip)
-//   insulatingPlates (z = 0 and z = h, n . J = 0, no slip)
-// The previous 'sides' (wedge symmetry) patch is gone; in 360 there is
-// no symmetry plane to enforce.
-//
-// Face vertex order for each block follows the local-face convention.
-// A hex local face X-min uses local indices (0 4 7 3); the resulting normal
-// points in the local -x direction, which for our blocks is -r -- i.e. OUT
-// of the fluid through the inner electrode.  Same logic gives outward normals
-// for X-max (outer electrode), Z-min (bottom plate), Z-max (top plate).
-// ---------------------------------------------------------------------------
+-------------------------------------------------------------------
 boundary
 (
     innerElectrode
