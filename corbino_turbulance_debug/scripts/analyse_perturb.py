@@ -1,45 +1,5 @@
 #!/usr/bin/env python3
-"""
-analyse_perturb.py — diagnose growth / decay / saturation of the
-                     5%-RMS perturbation injected at t = 0.5 s.
 
-Usage (from the case directory):
-
-    python3 scripts/analyse_perturb.py                      # default postProc path
-    python3 scripts/analyse_perturb.py --start 0.5 --end 0.55
-
-Reads
------
-    postProcessing/probes/0.5/U     (per-step probe time-series, 5 locations)
-
-Computes
---------
-    - Per-probe time series of U_x, U_y, U_z.
-    - U_perp(t) = U_z (the cleanest perturbation diagnostic: U_z is exactly
-      zero in the laminar Hartmann state by symmetry, so any non-zero U_z
-      is purely due to the injected perturbation -- no need to subtract a
-      laminar baseline that's still slowly drifting on tau_H).
-    - U_theta(t)  -- the bulk laminar component, projected to azimuthal.
-    - RMS over the five probes:
-          RMS_z(t) = sqrt(< U_z^2 >_probes)
-      This is our scalar perturbation-amplitude estimator.
-    - Linear-fit log(RMS_z) vs t -> growth/decay rate sigma [1/s].
-      sigma > 0 means perturbation grows  (instability)
-      sigma < 0 means perturbation decays (laminar stable)
-      |sigma| compared to tau_A = 7.4 ms tells us the regime:
-          |sigma| * tau_A ~ 1   marginal
-          sigma * tau_A > 1     fast growth
-          sigma * tau_A < -1    fast decay
-
-Writes
-------
-    postProcessing/analyse_perturb/Uz_per_probe.png
-    postProcessing/analyse_perturb/RMSz_with_fit.png
-    postProcessing/analyse_perturb/verdict.txt
-
-The verdict.txt is a single short paragraph that we'll paste straight
-into the report findings.
-"""
 
 from __future__ import annotations
 
@@ -65,9 +25,9 @@ except ImportError:
 TAU_A = 7.4e-3  # s, Lorentz/Hartmann damping time at our parameters
 
 
-# -----------------------------------------------------------------------------
+
 # Probe-file parser (OpenFOAM ASCII vector probe format)
-# -----------------------------------------------------------------------------
+
 # Format:
 #   # Probe 0 (x y z)
 #   # Probe 1 ...
@@ -115,9 +75,9 @@ def read_probes(path: Path) -> tuple[np.ndarray, np.ndarray, list[tuple]]:
     return t_arr, U_arr, locs
 
 
-# -----------------------------------------------------------------------------
+
 # Diagnostics
-# -----------------------------------------------------------------------------
+
 def project_theta(U: np.ndarray, locs: list[tuple]) -> np.ndarray:
     """Project U_xy at each probe onto local theta-hat. Returns (Nt, Nprobe)."""
     out = np.zeros((U.shape[0], U.shape[1]))
@@ -157,9 +117,9 @@ def fit_log_linear(t: np.ndarray, y: np.ndarray) -> tuple[float, float, float]:
     return sigma, A, r2
 
 
-# -----------------------------------------------------------------------------
+
 # Driver
-# -----------------------------------------------------------------------------
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument(
