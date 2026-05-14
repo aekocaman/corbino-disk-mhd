@@ -14,16 +14,12 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// LAPTOP debug-mesh decomposition for the 2.30e6-cell wiring case.
 //
 // numberOfSubdomains
 //   - 4   : minimum, for a 4-core laptop  (~ 0.58 M cells / rank)
 //   - 8   : default for an 8-core laptop  (~ 0.29 M cells / rank, sweet spot)
 //   - 16  : oversubscribe a 4P/8L laptop only if RAM allows
 //
-// method = scotch [Pel99]: graph-partitioning, ignores patch geometry.
-// Mirrors the production decomposeParDict exactly so the same launcher
-// scripts and post-processing tools work without modification.
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
