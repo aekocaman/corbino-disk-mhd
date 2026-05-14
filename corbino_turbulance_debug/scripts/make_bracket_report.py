@@ -1,31 +1,5 @@
 #!/usr/bin/env python3
-"""
-make_bracket_report.py — generate report-grade figures and a markdown table
-                         for the perturbation amplitude bracket.
 
-Run from the case directory after the bracket has completed:
-
-    python3 scripts/make_bracket_report.py
-
-Reads
------
-For each label in (2pct, 5pct, 10pct, 15pct, 30pct), expects:
-
-    postProcessing_<label>/analyse_perturb/verdict.txt
-    postProcessing_<label>/probes/0.5/U
-    postProcessing_<label>/probes/0.5/Phi
-    postProcessing_<label>/analyse_backemf/verdict_backemf.txt    [optional]
-
-Writes
-------
-    postProcessing/report/bracket_overview.png   - 4-panel summary figure
-    postProcessing/report/sigma_vs_amplitude.png - decay rate scan
-    postProcessing/report/backemf_vs_amplitude.png - back-EMF scan
-    postProcessing/report/bracket_table.md       - markdown table for the thesis
-    postProcessing/report/SUMMARY.txt            - plain-text bracket summary
-
-The PNGs are 300-DPI ready for direct insertion into the thesis.
-"""
 
 from __future__ import annotations
 
