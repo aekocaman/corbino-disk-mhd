@@ -22,12 +22,6 @@ FoamFile
 //   the perturbation grows (instability), saturates (turbulence), or decays
 //   (laminar stable).
 //
-//   Why 50 ms:
-//     tau_A = 7.4 ms (Lorentz/damping balance time)
-//     - if linearly unstable: e-folding ~ tau_A; 7 tau_A = clear saturation
-//     - if linearly stable:   decay e-folding ~ tau_H/Ha = 14 ms;
-//                             50 ms = factor ~30 reduction, unambiguous decay
-//
 //   Snapshot cadence: 2 ms (25 frames over 50 ms).  Probes every step for
 //   high time-resolution spectra at the five fixed locations.
 //
