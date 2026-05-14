@@ -14,10 +14,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// Velocity initial + boundary conditions for the 360 laminar baseline.
+// Initial velocity + boundary conditions for the laminar baseline.
 //
-// All physical surfaces are no-slip.  No 'sides' patch -- the wedge
-// symmetry is gone with the full annulus.
+// All physical surfaces are no-slip.  
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,8 +38,7 @@ boundaryField
 
     insulatingPlates
     {
-        // Hartmann layers form here -- no-slip is the driver of the
-        // sigma_w (wall shear) that closes the global torque balance.
+        // Where Hartmann layers form 
         type            noSlip;
     }
 }
