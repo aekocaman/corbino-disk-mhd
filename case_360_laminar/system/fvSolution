@@ -20,10 +20,6 @@ FoamFile
 // conjugate gradient with tight tolerance (1e-8) -- Phi convergence is
 // what drives the torque balance, so cutting corners here poisons E_tau.
 //
-// Because the domain is closed on all sides, p has no Dirichlet anchor.
-// pRefCell/pRefValue pins the pressure at one mesh cell to break the
-// singular null space.
-//
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 solvers
@@ -42,11 +38,7 @@ solvers
         relTol          0;
     }
 
-    // pB was originally PCG/DIC; on the coarsened 16-z mesh this took
-    // ~44 iterations per solve (vs 4 for p with GAMG) because the larger
-    // midplane aspect ratio worsens the matrix conditioning.  GAMG handles
-    // ill-conditioned elliptic systems much better.  Expect ~3-5x speedup
-    // on the pB step, which dominates timestep cost.
+
     pB
     {
         solver          GAMG;
@@ -82,16 +74,13 @@ solvers
 PISO
 {
     nCorrectors              2;
-    nNonOrthogonalCorrectors 1;     // checkMesh on the wedge reported low
-                                    // non-orthogonality; one corrector is
-                                    // enough unless you push the grading.
+    nNonOrthogonalCorrectors 1;     
+              
     pRefCell                 0;
     pRefValue                0;
 }
 
-// OpenFOAM 13 mhdFoam runs a *separate* PISO loop for the induction equation
-// (B field).  Without this block the solver aborts with
-//      "keyword BPISO is undefined in dictionary fvSolution".
+
 BPISO
 {
     nCorrectors              2;
