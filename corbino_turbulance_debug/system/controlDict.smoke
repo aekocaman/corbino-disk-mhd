@@ -31,12 +31,6 @@ FoamFile
 //     -> Dt floats between ~1e-6 (seed) and maxDeltaT = 5e-4 (cap)
 //     -> ~ 20-40 timesteps to reach endTime
 //
-//   Wall-clock estimate: ~5-10 s/timestep on 8 ranks (~290k cells/rank)
-//                        -> total ~ 3-7 min
-//
-// Once this passes, switch back to controlDict.production for any
-// longer run (and revisit endTime / writeInterval / maxDeltaT).
-//
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 application     epotMhdFoam;
