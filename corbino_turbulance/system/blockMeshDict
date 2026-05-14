@@ -14,7 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// Step-2 turbulent DNS mesh: full 360° Corbino annulus.
+// Step-2 turbulent DNS mesh:
 // Same topology as case_360_laminar/system/blockMeshDict (4 hex blocks,
 // 16 vertices, identical patches), but with the cell count and z-grading
 // rebuilt for wall-resolved DNS at Re_a/Ha^2 ~ 1.2 (PK14 transition).
@@ -39,7 +39,7 @@ FoamFile
 // Cell counts per block (per quadrant):
 //   N_r = 600 ; N_theta = 384  ; N_z = 70           (medium mesh)
 //   total = 4 blocks * 600 * 384 * 70  =  6.45e7 cells
-// Coarse / fine variants (Phase 7 GCI study, §9.2 Phase 7):
+// Coarse / fine variants:
 //   coarse :   N_theta = 256 per block  (=  1024 azimuthal,  4.30e7 cells)
 //   medium :   N_theta = 384 per block  (=  1536 azimuthal,  6.45e7 cells)
 //   fine   :   N_theta = 512 per block  (=  2048 azimuthal,  8.60e7 cells)
