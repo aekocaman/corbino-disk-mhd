@@ -15,9 +15,6 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
 // Discretisation schemes.  Second order everywhere for the laminar baseline
-// -- upwind would smear the Hartmann layer and hide the wall-shear physics
-// we are trying to validate torque against.
-//
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 ddtSchemes
