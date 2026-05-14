@@ -1,6 +1,6 @@
-# MHD Turbulence in a Corbino Disk — Senior Project
+# MHD Turbulence in a Corbino Disk
 
-Senior physics project at Bilkent University investigating
+This is my senior project (Bilkent University) investigating
 magnetohydrodynamic (MHD) flow and stability of liquid Galinstan
 in a Corbino-disk geometry under a uniform axial magnetic field.
 Advisor: Aydın Cem Keser.
