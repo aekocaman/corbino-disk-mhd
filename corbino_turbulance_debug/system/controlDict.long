@@ -12,49 +12,6 @@ FoamFile
     class       dictionary;
     object      controlDict;
 }
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-//
-// LONG-RUN controlDict for the laptop debug case.
-//
-//   Purpose: produce a multi-hour, walk-away compute run on the validated
-//   2.30e6-cell wiring case.  The smoke run (controlDict.smoke, endTime
-//   0.005 s) confirmed the pipeline (mesh -> decompose -> solver ->
-//   snapshots -> probes) and revealed that the Phi-PCG solve dominates the
-//   per-step wall clock.  fvSolution.long swaps Phi to GAMG to fix that;
-//   this dict pushes the run out to 0.5 s of physical time.
-//
-//   Physical span:
-//     endTime 0.5 s ~ 0.36 tau_H (Hartmann settling time tau_H ~ 1.4 s)
-//                  ~ 67   tau_A  (Alfven/Lorentz time   tau_A ~ 7.4 ms)
-//     -> well past initial Lorentz spin-up; fluid is settling toward the
-//        quasi-steady laminar Hartmann profile.  This is NOT turbulence
-//        (no IC perturbation injected yet), but it IS a much longer-time
-//        sanity check on the laminar baseline at the debug resolution.
-//
-//   Time-step budget (adaptive via maxCo):
-//     dz_min    = 50 um
-//     U_typ     ~ 0.05 .. 0.5 m/s   (settling Hartmann profile)
-//     maxCo*dz/U ~ 5e-5 .. 5e-4 s
-//     -> Dt floats between ~5e-5 (peak velocity) and maxDeltaT 5e-4 (cap)
-//     -> ~ 1500 - 10000 timesteps to reach endTime
-//
-//   Wall-clock estimate (8 ranks, GAMG-Phi):
-//     smoke run: ~5-7 s/step PCG-Phi, of which ~80% was Phi.  GAMG-Phi
-//     should drop that to ~1-2 s/step => ~ 0.4 .. 5 hours total.
-//     Budget 1.5-3 hours typical; tail off as Dt approaches the maxDeltaT
-//     cap once velocity peaks.
-//
-//   Disk budget:
-//     50 snapshots * ~90 MB/snapshot (binary, 8 ranks) ~ 4.5 GB.
-//     Tune writeInterval if disk pressure becomes an issue.
-//
-//   Graceful stop without losing the in-flight step:
-//     foamJob ... or:    `touch system/abort` and set
-//                        `stopAt writeNow;`  via runTimeModifiable.
-//     Or send SIGUSR2 to the mpirun parent (clean OpenFOAM stop).
-//     Or hard kill via the PID stored in epotmhd.pid.
-//
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 application     epotMhdFoam;
 
