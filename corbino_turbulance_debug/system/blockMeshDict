@@ -72,10 +72,6 @@ FoamFile
 // r-grading: 1.05 : 1   (kept identical to production for solver-symmetry)
 // theta-grading: 1.0    (uniform; FFT-friendly even at N_theta = 384)
 //
-// Mesh-quality envelope to expect from checkMesh:
-//   max non-orthogonality < 60 deg
-//   max skewness          < 4
-//   max aspect ratio      < ~ 35  (driven by r_out*dtheta / dz_min)
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
