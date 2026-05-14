@@ -55,7 +55,7 @@ FoamFile
 //        (0.95499 0.68571 1.0000)      // uniform bulk
 //        (0.02251 0.15714 0.16151))    // mirror wall layer
 //
-// r-grading: 1.05 : 1 from inner electrode to outer (§9.2).  Mild
+// r-grading: 1.05 : 1 from inner electrode to outer.  Mild
 // refinement at r_in where U_theta is largest (~1/r in the laminar
 // core) and the Shercliff side-layer scales as h/sqrt(Ha) ~ 1 mm.
 //
