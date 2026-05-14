@@ -14,11 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// PRODUCTION controlDict for the 64.5 M-cell DNS Corbino case.
-// Sized for cluster execution per:
-//   step1_laminar_report.md §9.5 (compute resources)
-//   project_3day_campaign_and_cluster.md (cluster handoff)
-//
+// controlDict for the 64.5 M-cell DNS Corbino case.
 // PHYSICAL TIMING
 //   tau_A = rho/(sigma B^2)     = 7.44 ms      (Lorentz/Hartmann body damping)
 //   tau_H = rho h/(2 B sqrt(mu sigma)) = 0.71 s (Hartmann-layer relaxation)
@@ -29,14 +25,13 @@ FoamFile
 //   This covers (i) >= 1 tau_H of mesh-induced re-equilibration after any
 //   warm-start mapFields, plus (ii) >= 5 tau_H statistically-stationary
 //   averaging window for second-moment diagnostics
-//   (Reynolds stresses, spectra, C_zz; see report §9.2 Phase 5).
 //
 // TIME-STEP CONTROL
 //   dz_min  =  7 um, U_typ ~ 0.1 m/s, maxCo = 0.3
 //     -> Dt_cap = 0.3 * 7e-6 / 0.1 = 2.1e-5 s
 //   maxDeltaT = 5e-5 (loose cap; CFL controller dominates)
 //
-// SNAPSHOT CADENCE
+// SNAPSHOTS
 //   writeInterval = 0.05 s = 50 ms = 6.7 tau_A
 //   ->  N_frames over 4.5 s = 90 frames
 //   ->  21 frames per tau_H, 13 per tau_A spent in averaging window
@@ -53,17 +48,7 @@ FoamFile
 //   probe-based spectral diagnostic (E(k_theta) at r = 6 cm) but more
 //   importantly extend the radial coverage for C_zz(r) (PK14 Q2D-vs-3D
 //   diagnostic).
-//   probe writeInterval = timeStep, every step (fine resolution for
-//   spectra; total probe-data size still < 1 GB at 90,000 steps total).
-//
-// FUNCTION OBJECTS
-//   - probes (above)
-//   - azimuthal-line probes at r = 6 cm, z = h/2: the Welch-FFT input
-//     for E(k_theta).  N_theta = 1536, sample once per timestep.
-//   - vertical-pair probes for C_zz(r) at r in {3, 5, 7} cm,
-//     z1 = 1 mm and z2 = 9 mm (above the Hartmann layer at both ends).
-//   - forces / dissipation function objects for energy-balance closure.
-//   These are documented in §9.2 Phase 5 of the laminar report.
+//   probe writeInterval = timeStep, every step
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -111,7 +96,7 @@ functions
             ( 0.060  0.0    0.005   )    //  r = 6 cm,  midplane
             ( 0.080  0.0    0.005   )    //  r = 8 cm,  midplane
             ( 0.060  0.0    0.0007  )    //  r = 6 cm,  z = 0.7 mm
-            ( 0.0    0.060  0.005   )    //  r = 6 cm @ theta = 90, midplane
+            ( 0.0    0.060  0.005   )    //  r = 6 cm at theta = 90, midplane
             ( 0.060  0.0    0.000035)    //  r = 6 cm,  z = 35 um (intra-Hartmann)
             ( 0.050  0.0    0.005   )    //  r = 5 cm,  midplane (radial sweep)
             ( 0.070  0.0    0.005   )    //  r = 7 cm,  midplane
@@ -190,8 +175,6 @@ functions
     }
 
     // ------- Volumetric energy & dissipation diagnostics --------------
-    // Logged every step into postProcessing/<func>/<startTime>/<vol>.dat.
-    // Used in §9.2 Phase 6 / §9.6 energy-balance closure.
     KE
     {
         type            volFieldValue;
