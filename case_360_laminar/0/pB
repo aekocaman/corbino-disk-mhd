@@ -13,20 +13,20 @@ FoamFile
     object      pB;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//Small rounding errors build up, causing the magnetic field 
+//($\mathbf{B}$) to not be zero. To fix this, the solver uses a Projection Method. 
+//It solves an extra equation for a scalar field, called $pB$, and uses the result to "project"
+//the magnetic field back to a state where its divergence is zero.
 //
-// Magnetic-projection scalar pB used to enforce div(B) = 0 each step.
-//
-// OF13 mhdFoam stores pB with units [1 1 -3 0 0 -1 0] = T m s^-1, NOT the
+// Apparently, OF13 mhdFoam stores pB with units [1 1 -3 0 0 -1 0] = T m s^-1, NOT the
 // energy-density form [1 -1 -2 0 0 0 0] used in older mhdFoam variants.
-// The factor is hidden in the laplacian coefficient applied inside the
-// solver (see OF13 mhdFoam.C).  Use the tutorial value verbatim.
 //
 // pB is determined only up to an additive constant; one Dirichlet patch
 // is required to pin the gauge.  We anchor on the outer electrode.
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [1 1 -3 0 0 -1 0];
+dimensions      [1 1 -3 0 0 -1 0];  // T m s^-1
 
 internalField   uniform 0;
 
