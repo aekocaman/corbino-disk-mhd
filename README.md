@@ -1,6 +1,6 @@
 # MHD Turbulence in a Corbino Disk
 
-This is my senior project (Bilkent University) investigating
+This is my work for senior project  at Bilkent University. It investigates
 magnetohydrodynamic (MHD) flow and stability of liquid Galinstan
 in a Corbino-disk geometry under a uniform axial magnetic field.
 Advisor: Aydın Cem Keser.
@@ -8,7 +8,7 @@ Advisor: Aydın Cem Keser.
 ## Contents
 
 - `epotMhdFoam/` — custom low-Rm electric-potential MHD solver
-  (extension of OpenFOAM's stock `mhdFoam`).
+  (extension of OpenFOAM's `mhdFoam`).
 - `epotMhdFoamHybrid/` — hybrid solver adding the magnetic-induction
   equation for moderate-Rm regimes. Validated against `epotMhdFoam`
   at low Rm and against linear induction theory at finite Rm.
@@ -23,8 +23,7 @@ Advisor: Aydın Cem Keser.
 - `corbino_turbulance/` — production-mesh case files staged for
   cluster deployment (SLURM submission template, runbook,
   preflight checklist, verification demo).
-- `report/` — thesis LaTeX source, headline figure script, and
-  campaign log.
+
 
 ## Quick start
 
@@ -33,13 +32,13 @@ In an OpenFOAM 13 environment:
     cd epotMhdFoam       && wmake && cd ..
     cd epotMhdFoamHybrid && wmake && cd ..
 
-See each subdirectory's README for case-specific instructions.
+For further information see each subdirectory's README for case-specific instructions.
 
 ## Citation
 
 Kocaman, A. E. (2026). Stability of Laminar Magnetohydrodynamic
 Corbino Flow and Foundations for Turbulent Numerical Simulation.
-Senior Project, Department of Physics, Bilkent University.
+Senior Project, Department of Physics, Bilkent University. (unpublished)
 
 ## License
 
