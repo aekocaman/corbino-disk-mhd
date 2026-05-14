@@ -14,26 +14,20 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// Step-1 inner-electrode potential, with a linear ramp.
+// Inner-electrode potential, with a linear ramp:
 //
-// PHYSICAL VALUE (READ THIS):
-//   The progress-report wedge case used innerElectrode value uniform 1.0;
-//   that is *not* a non-dimensionalised potential -- mhdFoam works in SI.
-//   With sigma = 3.46e6 S/m and the 1/r conduction profile, V_in = 1 V
-//   drives ~135 kA through the disk (factor ~270 over the design point of
-//   500 A).  That explains a large part of the CFL catastrophe at 0.035 s.
 //
-//   For target current I = 500 A the laminar 1/r distribution requires
+//  For target current I = 500 A the laminar 1/r distribution requires
 //       V_in = I * ln(r_out/r_in) / (2 pi sigma h)
 //            = 500 * ln(5) / (2 pi * 3.46e6 * 0.01)
 //            ~ 3.703e-3 V   = 3.7 mV.
-//   This is the value used below.
 //
 // RAMP:
 //   Holding V_in fixed at 3.7 mV from t = 0 still gives an impulsive
 //   J x B kick because u_theta = 0 initially and the back-EMF term
-//   (u x B) cannot oppose the driving E_r yet.  Ramping V_in linearly
-//   over t_ramp = 50 ms ~ 7 * tau_A lets u_theta build up gradually so
+//   (u x B) cannot oppose the driving E_r yet.  But that caused unlimited grow of
+//   Courant number. Hence, V_in is linearly ramped
+//   over t_ramp = 50 ms ~ 7 * tau_A so to let u_theta build up gradually so
 //   the back-EMF develops alongside the driving field and the Courant
 //   number stays bounded.
 //
