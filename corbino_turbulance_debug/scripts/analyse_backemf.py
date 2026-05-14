@@ -1,59 +1,5 @@
 #!/usr/bin/env python3
-"""
-analyse_backemf.py — diagnose the back-EMF response of the electric
-                     potential Phi to the injected velocity perturbation.
 
-Physical question
------------------
-The Lorentz body force decomposes as
-
-    F = sigma( -grad(Phi) x B )  +  sigma( (U.B) B )  -  sigma |B|^2 U
-
-The last term is the Hartmann body damping that sets the laminar U_theta.
-The FIRST term encodes the *electric* response: any U-perturbation feeds
-into the charge-conservation equation
-
-    div(sigma grad Phi) = div(sigma U x B)
-
-so a velocity perturbation U' produces a perturbation Phi' that, in turn,
-modifies J' = sigma(-grad Phi' + U' x B) and thus the body force.
-
-If |Phi'| is non-negligible compared to its scale (U' B L), the decay we
-observed in analyse_perturb.py is electromagnetically mediated, not purely
-hydrodynamic.  If |Phi'| is dwarfed by U' B L, the perturbation is being
-killed purely by body-force damping on the perpendicular components.
-
-This script
------------
-1. Reads `<probes-dir>/Phi` and the U from the same probes directory.
-2. Defines the laminar baseline Phi_lam[i] = Phi at the first sample of each
-   probe (= the laminar value, since Phi was untouched by perturb_ic.py).
-3. Computes Phi'(t) = Phi(t) - Phi_lam at every sample.
-4. Computes the analytic-scale estimate
-
-       Phi_scale(t) = RMS(U_z, t) * B * L
-
-   with B = 0.5 T (axial field magnitude) and L = 5 mm (perturbation
-   integral scale).  This is the back-EMF amplitude that a single eddy of
-   the injected scale would produce instantaneously, ignoring the
-   div-grad-Phi smoothing.
-5. Plots
-       (a) Phi'(t) per probe
-       (b) RMS(Phi') vs Phi_scale  with the ratio overlaid
-6. Writes a short verdict comparing the two:
-       ratio < 0.1   -> back-EMF response is suppressed (Phi smoothing
-                        dominates: low-Rm + closed domain + insulating BCs
-                        flattens the Phi' field).
-       0.1 < ratio < 1.0 -> back-EMF participates in the dynamics
-       ratio > 1.0   -> back-EMF dominates (rare; would imply Hartmann
-                        body force is being driven through the Phi route)
-
-Usage
------
-    python3 scripts/analyse_backemf.py --probes-dir postProcessing_5pct/probes/0.5
-
-Defaults to postProcessing/probes/0.5 if no flag.
-"""
 
 from __future__ import annotations
 
