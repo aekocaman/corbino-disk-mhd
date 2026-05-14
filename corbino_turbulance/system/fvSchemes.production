@@ -15,9 +15,8 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
 // Production discretisation schemes for the 64.5 M-cell DNS.
-// Same as the laminar baseline (case_360_laminar/system/fvSchemes) plus
-// one tighter divergence scheme on div(phi,U) per turbulent-DNS practice
-// in [krasnov2012duct]: limitedLinear V 1 instead of plain linear.
+// Same as the laminar baseline  plus
+// one tighter divergence scheme on div(phi,U) per turbulent.
 //
 // Time scheme: backward (2nd order, A-stable, OpenFOAM canonical for PISO
 // at adaptive Dt with maxCo <= 0.5).
