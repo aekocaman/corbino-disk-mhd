@@ -73,8 +73,4 @@ checkMesh -allTopology -allGeometry > log.checkMesh
   - max skewness < 4 (target)
   - max aspect ratio < ~35 (driven by `r_out · Δθ / Δz_min`)
 
-## See also
 
-`../corbino_turbulance/README.md` for the production-DNS sibling, and
-`report/step1_laminar_report.md` §8–§9 for the turbulence roadmap and
-eight-phase execution plan.
