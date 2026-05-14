@@ -1,0 +1,43 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  13                                    |
+|   \\  /    A nd           | Web:      www.openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      B;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Imposed uniform axial magnetic field, B = 0.5 T zhat.
+//
+// BC convention follows the OF13 mhdFoam Hartmann tutorial:
+//   - On walls perpendicular to B (here the insulating plates at z = 0, h),
+//     fix B as a Dirichlet condition -- B does not change tangentially.
+//   - On walls parallel to B (here the cylindrical electrodes), use
+//     zeroGradient -- B is allowed to develop along the surface.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [1 0 -2 0 0 -1 0];   // T = kg s^-2 A^-1
+
+internalField   uniform (0 0 0.5);
+
+boundaryField
+{
+    innerElectrode   { type zeroGradient; }
+    outerElectrode   { type zeroGradient; }
+
+    insulatingPlates
+    {
+        type            fixedValue;
+        value           uniform (0 0 0.5);
+    }
+}
+
+// ************************************************************************* //

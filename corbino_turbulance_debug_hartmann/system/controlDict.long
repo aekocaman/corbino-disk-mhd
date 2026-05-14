@@ -1,0 +1,107 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM 13 (Foundation)                        |
+|  \\    /   O peration     | epotMhdFoam — low-Rm electric-potential MHD     |
+|   \\  /    A nd           | corbino_turbulance_debug_hartmann — LONG RUN    |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// LONG-RUN controlDict for the Hartmann-resolved sibling case.
+//
+//   Purpose: produce a Hartmann-resolved laminar baseline at t = 0.5 s on
+//   the 5.376e6-cell sibling mesh, matching the protocol of the under-
+//   resolved debug case.  Will serve as the seed state for the Hartmann-
+//   resolved perturbation bracket.
+//
+//   Key differences vs corbino_turbulance_debug/system/controlDict.long:
+//
+//     - maxDeltaT lowered to 5e-5  (was 5e-4).  At dz_min = 7 um and
+//       U_typ ~ 0.1 m/s, the convective Courant condition with maxCo = 0.5
+//       yields Dt_cap ~ 3.5e-5 s.  Setting maxDeltaT = 5e-5 keeps the
+//       hard cap a little above the convective cap so the CFL controller
+//       continues to drive Dt; if Dt ever saturates at maxDeltaT, the
+//       solver is signalling the cap is too low.
+//
+//     - deltaT seed reduced to 1e-6 to match the Hartmann-resolved
+//       smaller cells; the controller will grow it to ~3.5e-5 within
+//       a few hundred steps.
+//
+//     - writeInterval kept at 0.01 s (50 frames) since storage cost per
+//       frame is ~2.3x larger (more cells) but still tractable: 50 *
+//       ~210 MB = ~10.5 GB.
+//
+//     - probes writeInterval bumped to 50 (was 1 in the under-resolved
+//       perturb run, 1 in long run).  At Dt ~ 3e-5 that's 1.5 ms
+//       per sample -- enough resolution to capture the tau_A = 7.4 ms
+//       dynamics with ~5 samples per tau_A, while keeping the probe
+//       file size under 200 MB.  Restore writeInterval 1 for any
+//       perturbation run on this mesh.
+//
+//   Wall-clock estimate (8 ranks, GAMG-Phi):
+//     ~0.5 s / 3e-5 s per step = ~17000 steps
+//     ~2 s / step (memory-bandwidth-limited at 5.4 M cells)
+//     ->  ~ 7-9 hours total.   Overnight job.
+//
+//   Disk budget:
+//     50 snapshots * ~210 MB/snapshot (binary, 8 ranks) ~ 10.5 GB.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     epotMhdFoam;
+
+startFrom       latestTime;     // resume from 0/ on cold start; from any
+                                // partial snapshot if relaunched
+startTime       0;
+
+stopAt          endTime;
+endTime         0.5;            // 500 ms physical; same target as
+                                // under-resolved debug case
+
+// --- Time-step control ---------------------------------------------------
+deltaT          1e-6;           // seed; CFL controller will grow it
+adjustTimeStep  yes;
+maxCo           0.5;
+maxDeltaT       5e-5;           // cap, sized to the Hartmann-resolved dz_min
+
+// --- Write control -------------------------------------------------------
+writeControl    adjustableRunTime;
+writeInterval   0.01;           // 10 ms snapshots -> 50 frames over 0.5 s
+purgeWrite      0;
+writeFormat     binary;
+writePrecision  8;
+writeCompression off;
+timeFormat      general;
+timePrecision   6;
+runTimeModifiable yes;
+
+// --- Function objects ---------------------------------------------------
+functions
+{
+    probes
+    {
+        type            probes;
+        libs            ("libsampling.so");
+        writeControl    timeStep;
+        writeInterval   50;            // ~ every 1.5 ms ->  ~5 samples/tau_A
+        fields          (U Phi J);
+        probeLocations
+        (
+            ( 0.040  0.0    0.005 )    //  r = 4 cm,  midplane
+            ( 0.060  0.0    0.005 )    //  r = 6 cm,  midplane
+            ( 0.080  0.0    0.005 )    //  r = 8 cm,  midplane
+            ( 0.060  0.0    0.0007)    //  r = 6 cm,  z = 0.7 mm  (above wall layer)
+            ( 0.060  0.0    0.000035)  //  r = 6 cm,  z = 35 um   (inside Hartmann layer)
+            ( 0.0    0.060  0.005 )    //  r = 6 cm @ theta = 90, midplane
+        );
+    }
+}
+
+// ************************************************************************* //

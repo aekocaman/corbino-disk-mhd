@@ -1,0 +1,39 @@
+# OpenFOAM time-step output (large, regeneratable)
+**/[0-9].[0-9]*/
+**/[0-9]/
+!**/0/
+**/processor*/
+**/postProcessing/
+**/log.*
+**/dynamicCode/
+
+# Mesh cache
+**/constant/polyMesh/
+**/constant/extendedFeatureEdgeMesh/
+
+# Compile output
+**/platforms/
+**/lnInclude/
+**/Make/linux*/
+**/Make/darwin*/
+
+# Backups / scratch
+**/*.bak
+**/*~
+**/*.swp
+
+# Python cruft
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor configs
+.vscode/
+.idea/
+
+# ParaView stubs
+**/*.foam

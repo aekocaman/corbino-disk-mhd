@@ -1,0 +1,36 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM 13 (Foundation)                        |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// LAPTOP Hartmann-resolved decomposition for the 5.376e6-cell sibling case.
+//
+// numberOfSubdomains
+//   - 8   : default for an 8-core laptop  (~ 0.67 M cells / rank, sweet spot)
+//
+// method = scotch [Pel99]: graph-partitioning, ignores patch geometry.
+// Mirrors the under-resolved debug decomposeParDict exactly so launcher
+// scripts and post-processing tools work without modification.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+numberOfSubdomains 8;
+
+method            scotch;
+
+distributed       no;
+
+roots             ( );
+
+// ************************************************************************* //

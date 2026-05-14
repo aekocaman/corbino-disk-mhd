@@ -1,0 +1,46 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  13                                    |
+|   \\  /    A nd           | Web:      www.openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      pB;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Magnetic-projection scalar pB used to enforce div(B) = 0 each step.
+//
+// OF13 mhdFoam stores pB with units [1 1 -3 0 0 -1 0] = T m s^-1, NOT the
+// energy-density form [1 -1 -2 0 0 0 0] used in older mhdFoam variants.
+// The factor is hidden in the laplacian coefficient applied inside the
+// solver (see OF13 mhdFoam.C).  Use the tutorial value verbatim.
+//
+// pB is determined only up to an additive constant; one Dirichlet patch
+// is required to pin the gauge.  We anchor on the outer electrode.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [1 1 -3 0 0 -1 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+    innerElectrode   { type zeroGradient; }
+
+    outerElectrode
+    {
+        type            fixedValue;
+        value           uniform 0;
+    }
+
+    insulatingPlates { type zeroGradient; }
+}
+
+// ************************************************************************* //

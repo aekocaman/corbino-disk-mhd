@@ -1,0 +1,38 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Web:      www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// LAPTOP debug-mesh decomposition for the 2.30e6-cell wiring case.
+//
+// numberOfSubdomains
+//   - 4   : minimum, for a 4-core laptop  (~ 0.58 M cells / rank)
+//   - 8   : default for an 8-core laptop  (~ 0.29 M cells / rank, sweet spot)
+//   - 16  : oversubscribe a 4P/8L laptop only if RAM allows
+//
+// method = scotch [Pel99]: graph-partitioning, ignores patch geometry.
+// Mirrors the production decomposeParDict exactly so the same launcher
+// scripts and post-processing tools work without modification.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+numberOfSubdomains 8;      // raise/lower to match laptop physical-core count
+
+method            scotch;
+
+distributed       no;
+
+roots             ( );
+
+// ************************************************************************* //

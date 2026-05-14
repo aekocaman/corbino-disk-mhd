@@ -1,0 +1,41 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Web:      www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Domain decomposition for the 6.45e7-cell DNS mesh.
+//
+// numberOfSubdomains
+//   - 64  : initial smoke-test on 1 node (~1.0 M cells / rank)
+//   - 128 : Phase-2 verification (~0.50 M cells / rank)
+//   - 256 : Phase-4..5 production (~0.25 M cells / rank, near-optimal)
+//
+// method = scotch [Pel99]: graph-partitioning, ignores patch geometry,
+// gives well-balanced subdomain volumes for unstructured-like topologies.
+// hierarchical (4 4 4) was rejected because the (theta r z) ordering of
+// our blockMesh creates anisotropic subdomain shapes when factor counts
+// don't align with N_theta divisibility (1536 = 2^9 * 3 doesn't factor
+// cleanly into balanced 3-axis splits at the desired core counts).
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+numberOfSubdomains 64;     // raise to 128/256 for production runs
+
+method            scotch;
+
+distributed       no;
+
+roots             ( );
+
+// ************************************************************************* //

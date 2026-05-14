@@ -1,0 +1,83 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Web:      www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Step-1 controlDict: adaptive time stepping for the laminar 360 baseline.
+//
+// WHY ADAPTIVE Dt:
+//   The wedge run hit a sigFpe at t = 0.035 s with max Courant = 26880.
+//   Root cause: the initial impulsive Lorentz forcing
+//       du_theta/dt = (sigma B_z / rho)(E_r - u_theta B_z)
+//   has a characteristic ramp time
+//       tau_A = rho / (sigma B_z^2)
+//             = 6440 / (3.46e6 * 0.25)
+//             ~ 7.4 ms
+//   After ~tau_A the fluid is moving fast (~order 1 m/s) and the first cell
+//   at the Hartmann wall is only ~6.6 um.  A fixed Dt = 5 ms therefore
+//   advects the fluid across hundreds of cells per step.
+//
+// FIX:
+//   1. Let the solver pick Dt from a CFL target -- maxCo 0.5 keeps a
+//      comfortable safety margin for the explicit convective and Lorentz
+//      sub-steps inside the PISO loop.
+//   2. Start with deltaT = 1e-7 s.  This is roughly Dt = 0.01 * tau_A and
+//      will be grown automatically once the residuals stabilise.
+//   3. Cap deltaT at 1e-3 s so the solver does not over-relax once the
+//      flow has settled into its laminar steady state.
+//
+// END TIME:
+//   tau_A ~ 7.4 ms; viscous spin-up timescale tau_nu = h^2/nu ~ 268 s for
+//   Galinstan, but in the Hartmann-braked regime the relevant settling time
+//   is tau_H = tau_A * Ha ~ 1.4 s.  endTime = 2.0 s gives ~1.4 settling
+//   times; if the torque has not converged by then, extend.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     mhdFoam;
+
+startFrom       startTime;
+startTime       0;
+
+stopAt          endTime;
+endTime         2.0;          // ~ 1.4 * tau_H, see header
+
+// --- Time-step control ---------------------------------------------------
+deltaT          1e-7;         // initial; solver will adapt
+adjustTimeStep  yes;
+maxCo           0.5;          // velocity Courant cap
+maxDeltaT       1e-3;         // never exceed this once stable
+
+// --- Write control -------------------------------------------------------
+writeControl    adjustableRunTime;
+writeInterval   0.01;         // write every 10 ms of simulated time
+purgeWrite      0;            // keep all snapshots; turn on later if disk hurts
+writeFormat     ascii;        // switch to binary once the case is verified
+writePrecision  8;
+writeCompression off;
+timeFormat      general;
+timePrecision   6;
+
+runTimeModifiable yes;        // edit controlDict mid-run if needed
+
+// --- Function objects: live diagnostics ---------------------------------
+// fieldMinMax was removed in OpenFOAM 13.  Solver stdout already prints
+// max Courant number per step, which is the most important live signal.
+// If you later want max(U) and max(Phi) tracked too, use OF13's
+// volFieldValue function object with operation max.
+functions
+{
+}
+
+// ************************************************************************* //

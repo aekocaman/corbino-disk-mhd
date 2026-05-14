@@ -1,0 +1,99 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM 13 (Foundation)                        |
+|  \\    /   O peration     | epotMhdFoam — low-Rm electric-potential MHD     |
+|   \\  /    A nd           | corbino_turbulance_debug — LONG-RUN solvers     |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Long-run solver settings.  Difference vs the smoke-test fvSolution:
+//
+//   - Phi: PCG/DIC  ->  GAMG/DICGaussSeidel
+//     The smoke run showed Phi-PCG burning 320-400 iters/step to drive the
+//     residual from O(1) (cold start) to 1e-8.  This dominates the per-step
+//     wall clock by an order of magnitude.  The Phi equation is a single
+//     elliptic Poisson on a closed domain; GAMG handles the coarse-scale
+//     modes far more efficiently than PCG.  Expect ~5-15 GAMG iters/step
+//     and a 5-10x speedup on the Phi solve.
+//
+//   - relTol on Phi raised from 0 -> 0.01 so GAMG can stop early on
+//     transient phases when initial residual is large (cold-start protection).
+//     Once initial residual drops below ~1e-6, the absolute tolerance 1e-8
+//     takes over and accuracy matches the PCG smoke run.
+//
+// Everything else (p, pB, U, B, PISO, BPISO) is identical to the smoke
+// fvSolution -- those were not bottlenecks.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-07;
+        relTol          0.01;
+    }
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
+
+    pB
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-06;
+        relTol          0.05;
+    }
+    pBFinal
+    {
+        $pB;
+        relTol          0;
+    }
+
+    "(U|B)"
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-08;
+        relTol          0;
+    }
+
+    Phi
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-08;
+        relTol          0.01;     // cold-start protection; absolute tol
+                                  // takes over once init residual < ~1e-6
+    }
+}
+
+PISO
+{
+    nCorrectors              2;
+    nNonOrthogonalCorrectors 1;
+    pRefCell                 0;
+    pRefValue                0;
+}
+
+BPISO
+{
+    nCorrectors              2;
+    nNonOrthogonalCorrectors 1;
+    pRefCell                 0;
+    pRefValue                0;
+}
+
+// ************************************************************************* //

@@ -1,0 +1,103 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Web:      www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Linear-solver settings for mhdFoam.
+// Pressure uses a geometric-algebraic multigrid (GAMG) for speed on the
+// ~600k-cell mesh.  Velocity, B and the potential use a preconditioned
+// conjugate gradient with tight tolerance (1e-8) -- Phi convergence is
+// what drives the torque balance, so cutting corners here poisons E_tau.
+//
+// Because the domain is closed on all sides, p has no Dirichlet anchor.
+// pRefCell/pRefValue pins the pressure at one mesh cell to break the
+// singular null space.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-07;
+        relTol          0.01;
+    }
+
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
+
+    // pB was originally PCG/DIC; on the coarsened 16-z mesh this took
+    // ~44 iterations per solve (vs 4 for p with GAMG) because the larger
+    // midplane aspect ratio worsens the matrix conditioning.  GAMG handles
+    // ill-conditioned elliptic systems much better.  Expect ~3-5x speedup
+    // on the pB step, which dominates timestep cost.
+    pB
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-06;
+        relTol          0.05;     // relaxed from 0.01 -- div(B) is already
+                                  // at 2e-19 each step, tighter is wasted work
+    }
+
+    pBFinal
+    {
+        $pB;
+        relTol          0;
+    }
+
+    "(U|B)"
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-08;
+        relTol          0;
+    }
+
+    Phi
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-08;
+        relTol          0;
+    }
+}
+
+PISO
+{
+    nCorrectors              2;
+    nNonOrthogonalCorrectors 1;     // checkMesh on the wedge reported low
+                                    // non-orthogonality; one corrector is
+                                    // enough unless you push the grading.
+    pRefCell                 0;
+    pRefValue                0;
+}
+
+// OpenFOAM 13 mhdFoam runs a *separate* PISO loop for the induction equation
+// (B field).  Without this block the solver aborts with
+//      "keyword BPISO is undefined in dictionary fvSolution".
+BPISO
+{
+    nCorrectors              2;
+    nNonOrthogonalCorrectors 1;
+    pRefCell                 0;
+    pRefValue                0;
+}
+
+// ************************************************************************* //

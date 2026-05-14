@@ -1,0 +1,2 @@
+epotMhdFoamHybrid.C
+EXE = $(FOAM_USER_APPBIN)/epotMhdFoamHybrid

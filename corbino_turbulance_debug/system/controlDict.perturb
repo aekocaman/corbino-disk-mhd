@@ -1,0 +1,109 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM 13 (Foundation)                        |
+|  \\    /   O peration     | epotMhdFoam — low-Rm electric-potential MHD     |
+|   \\  /    A nd           | corbino_turbulance_debug — PERTURBED RESTART    |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// PERTURBED-RESTART controlDict for the laptop debug case.
+//
+//   Purpose: restart from the laminar steady state at t = 0.5 s after
+//   scripts/perturb_ic.py has injected a 5%-RMS divergence-free velocity
+//   perturbation onto 0.5/U.  Run for 50 ms = ~7 tau_A and observe whether
+//   the perturbation grows (instability), saturates (turbulence), or decays
+//   (laminar stable).
+//
+//   Why 50 ms:
+//     tau_A = 7.4 ms (Lorentz/damping balance time)
+//     - if linearly unstable: e-folding ~ tau_A; 7 tau_A = clear saturation
+//     - if linearly stable:   decay e-folding ~ tau_H/Ha = 14 ms;
+//                             50 ms = factor ~30 reduction, unambiguous decay
+//
+//   Snapshot cadence: 2 ms (25 frames over 50 ms).  Probes every step for
+//   high time-resolution spectra at the five fixed locations.
+//
+//   Initial-step expectation: the first PISO loop will see large pressure-
+//   correction residuals as it cleans up the small (~percent) divergence
+//   left by interpolation + wall taper.  This is normal; subsequent steps
+//   should return to the smooth GAMG behaviour seen in the laminar long run.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     epotMhdFoam;
+
+startFrom       startTime;      // pin to t=0.5 explicitly so we don't
+                                // accidentally pick up a stale latestTime
+startTime       0.5;
+
+stopAt          endTime;
+endTime         0.55;           // 50 ms past the perturbation injection
+
+// --- Time-step control ---------------------------------------------------
+deltaT          1e-5;           // small seed for the first divergence-clean
+                                // step; controller will grow it
+adjustTimeStep  yes;
+maxCo           0.5;
+maxDeltaT       5e-4;
+
+// --- Write control -------------------------------------------------------
+writeControl    adjustableRunTime;
+writeInterval   0.002;          // 2 ms snapshots -> 25 frames over 50 ms
+purgeWrite      0;
+writeFormat     ascii;          // keep ASCII so post-processing scripts
+                                // can read snapshots without conversion;
+                                // ~70 MB/snapshot * 25 = ~1.75 GB total
+writePrecision  8;
+writeCompression off;
+timeFormat      general;
+timePrecision   6;
+runTimeModifiable yes;
+
+// --- Function objects ---------------------------------------------------
+functions
+{
+    probes
+    {
+        type            probes;
+        libs            ("libsampling.so");
+        writeControl    timeStep;
+        writeInterval   1;             // every step for spectral analysis
+        fields          (U Phi J);
+        probeLocations
+        (
+            ( 0.040  0.0    0.005 )    //  r = 4 cm,  midplane
+            ( 0.060  0.0    0.005 )    //  r = 6 cm,  midplane
+            ( 0.080  0.0    0.005 )    //  r = 8 cm,  midplane
+            ( 0.060  0.0    0.0007)    //  r = 6 cm,  z = 0.7 mm (above wall layer)
+            ( 0.0    0.060  0.005 )    //  r = 6 cm @ theta = 90, midplane
+        );
+    }
+
+    // Volume-averaged kinetic-energy diagnostic.  Tracks total energy
+    // including base flow; we'll subtract the laminar baseline in
+    // postproc to extract the perturbation energy E'(t).
+    KE
+    {
+        type            volFieldValue;
+        libs            ("libfieldFunctionObjects.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        log             false;
+        writeFields     false;
+        regionType      all;
+        operation       volIntegrate;
+        fields          (
+            U
+        );
+    }
+}
+
+// ************************************************************************* //

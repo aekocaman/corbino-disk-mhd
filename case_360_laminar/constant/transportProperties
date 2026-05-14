@@ -1,0 +1,34 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Web:      www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      transportProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Galinstan (GaInSn) properties at room temperature.
+// Source: Morley et al., 2008 (per progress report Table I).
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Electrical conductivity [S / m]
+sigma           sigma  [-1 -3  3  0  0  2  0]   3.46e6;
+
+// Kinematic viscosity   [m^2 / s]   nu = mu / rho = 2.4e-3 / 6440 = 3.73e-7
+nu              nu     [ 0  2 -1  0  0  0  0]   3.73e-7;
+
+// Mass density          [kg / m^3]
+rho             rho    [ 1 -3  0  0  0  0  0]   6440;
+
+// Magnetic permeability [H / m]   (vacuum value, fine for liquid metals)
+mu              mu     [ 1  1 -2  0  0 -2  0]   1.2566e-6;
+
+// ************************************************************************* //

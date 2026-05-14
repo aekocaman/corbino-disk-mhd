@@ -1,0 +1,88 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM 13 (Foundation)                        |
+|  \\    /   O peration     | epotMhdFoam — low-Rm electric-potential MHD     |
+|   \\  /    A nd           | corbino_turbulance_debug — SMOKE TEST controls  |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// SMOKE-TEST controlDict for the laptop debug case.
+//
+//   Purpose: prove the solver advances the new (200,96,30)-per-block mesh
+//   under the existing fvSchemes / fvSolution settings, and that snapshot
+//   I/O fires through decomposePar's processor*/ tree.  Not for physics.
+//
+//   Physical span: 5 ms = 0.0035 tau_H.  Lorentz acceleration begins
+//   immediately (U=0 IC, J = sigma * E from electrode Phi ramp); we are
+//   only checking the first ~1% of tau_A worth of dynamics.
+//
+//   Time-step budget:
+//     dz_min           = 50 um          (debug mesh wall layer)
+//     U_typ early      ~ 0.01-0.1 m/s   (Lorentz spin-up)
+//     maxCo * dz / U   ~ 5e-4 .. 5e-3 s
+//     -> Dt floats between ~1e-6 (seed) and maxDeltaT = 5e-4 (cap)
+//     -> ~ 20-40 timesteps to reach endTime
+//
+//   Wall-clock estimate: ~5-10 s/timestep on 8 ranks (~290k cells/rank)
+//                        -> total ~ 3-7 min
+//
+// Once this passes, switch back to controlDict.production for any
+// longer run (and revisit endTime / writeInterval / maxDeltaT).
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     epotMhdFoam;
+
+startFrom       latestTime;     // picks up 0/ since that's all we kept
+startTime       0;
+
+stopAt          endTime;
+endTime         0.005;          // 5 ms physical
+
+// --- Time-step control ---------------------------------------------------
+deltaT          1e-6;           // initial seed; CFL controller will grow it
+adjustTimeStep  yes;
+maxCo           0.5;
+maxDeltaT       5e-4;           // cap << endTime so we get multiple steps
+
+// --- Write control -------------------------------------------------------
+writeControl    adjustableRunTime;
+writeInterval   5e-4;           // 0.5 ms snapshots -> ~10 frames over 5 ms
+purgeWrite      0;
+writeFormat     binary;
+writePrecision  8;
+writeCompression off;
+timeFormat      general;
+timePrecision   6;
+runTimeModifiable yes;
+
+// --- Function objects ---------------------------------------------------
+functions
+{
+    probes
+    {
+        type            probes;
+        libs            ("libsampling.so");
+        writeControl    timeStep;
+        writeInterval   1;             // every step during smoke test
+        fields          (U Phi J);
+        probeLocations
+        (
+            ( 0.040  0.0    0.005 )    //  r = 4 cm,  midplane
+            ( 0.060  0.0    0.005 )    //  r = 6 cm,  midplane
+            ( 0.080  0.0    0.005 )    //  r = 8 cm,  midplane
+            ( 0.060  0.0    0.0007)    //  r = 6 cm,  z = 0.7 mm (just above wall layer)
+            ( 0.0    0.060  0.005 )    //  r = 6 cm @ theta = 90, midplane
+        );
+    }
+}
+
+// ************************************************************************* //

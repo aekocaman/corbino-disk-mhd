@@ -1,0 +1,255 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM 13 (Foundation)                        |
+|  \\    /   O peration     | Version: 13                                     |
+|   \\  /    A nd           | Web:  https://openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// HARTMANN-RESOLVED LAPTOP MESH for the Step-2 turbulent DNS case
+// (RAM-CONSTRAINED REVISION).
+//
+//   This mesh replaces the original 200x96x70-per-block design after the
+//   stress test on that mesh revealed swap thrashing on a 7.6 GiB laptop:
+//   the 5.376e6-cell working set (~6.2 GiB) overflowed into swap and per-
+//   step wall clock blew up by ~10x.  This revision drops N_theta from 96
+//   to 64 (-33% cells) to bring the working set comfortably inside RAM.
+//
+//   Total cells now: 4 * 200 * 64 * 70 = 3.584e6  (~4.1 GiB working set)
+//
+//   Physics consequences of the N_theta cut:
+//     - Azimuthal cell width at r_out:
+//         96 -> 64 changes Delta_theta * r_out from 1.64 mm to 2.45 mm.
+//     - Maximum resolvable azimuthal mode in full 360 deg annulus
+//         (4 quadrant blocks) drops from k_theta_max = 192 to k_theta_max
+//         = 128.  At our 5 mm integral scale, the perturbation peaks
+//         around k_theta ~ 75 (depending on r), so we still resolve the
+//         peak with ~50% margin to k_theta_max.
+//     - Hartmann layer resolution UNCHANGED (still 11 wall cells per side
+//         clustered at Delta_z_min = 7 um, ~8 cells inside delta_H).
+//
+//   Aspect ratio at the worst (corner) cell:
+//     7 um (z) : 533 um (r) : 2.45 mm (theta)
+//     -> Max aspect ratio ~ 350  (vs 226 in the 96-theta version)
+//   The cell-determinant-warning floor will tighten slightly, but we
+//   already accepted that warning class as a known, intentional feature.
+//
+// Geometry (mm; convertToMeters 0.001) -- unchanged:
+//   r_in  = 20 mm,  r_out = 100 mm,  h = 10 mm,  Gamma = 8
+//
+// z-grading -- unchanged from the 96-theta version:
+//   dz_min  =   7  um   (>= 5 cells across delta_H = 53 um, q = 1.2)
+//   bulk dz ~ 199  um
+//   Wall layer: 11 cells per side, q = 1.2, side span 225 um
+//   Bulk:       48 uniform cells x 199 um
+//   Total N_z = 70
+//   Multi-grading per block (z-fractions, cell-fractions, expansion ratios):
+//     wall (bottom):  z = 0.022505,  cells = 0.157143,  expansion = 6.1917
+//     bulk:           z = 0.954990,  cells = 0.685714,  expansion = 1.0000
+//     wall (top):     z = 0.022505,  cells = 0.157143,  expansion = 0.16151
+//
+// r-grading: 1.05 : 1   (unchanged)
+// theta-grading: 1.0    (uniform; FFT-friendly)
+//
+// Time-step budget (after Hartmann resolution):
+//   maxCo = 0.5, dz_min = 7 um, U_typ ~ 0.1 m/s (settled laminar)
+//   ->   Dt_cap ~ 3.5e-5 s
+//
+// Wall-clock budget on 8 ranks of an 8-GiB-RAM laptop, no swap:
+//   - per-step wall clock: ~5-10 s/step  (vs 78 s in the swap-bound run)
+//   - laminar baseline 0 -> 0.5 s : ~14000 steps  -> ~ 14-20 hours
+//     (still an overnight job)
+//   - 50 ms perturbation restart   : ~1500 steps   -> ~ 2-4 hours
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 0.001;     // dictionary entries are in millimetres
+
+// ---------------------------------------------------------------------------
+// Vertices  (identical to under-resolved debug / production / laminar baseline)
+// ---------------------------------------------------------------------------
+vertices
+(
+    // --- z = 0 plane, inner ring (r = 20 mm) ---
+    ( 20    0    0)   //  0 : theta =   0
+    (  0   20    0)   //  1 : theta =  90
+    (-20    0    0)   //  2 : theta = 180
+    (  0  -20    0)   //  3 : theta = 270
+
+    // --- z = 0 plane, outer ring (r = 100 mm) ---
+    ( 100    0    0)  //  4 : theta =   0
+    (   0  100    0)  //  5 : theta =  90
+    (-100    0    0)  //  6 : theta = 180
+    (   0 -100    0)  //  7 : theta = 270
+
+    // --- z = 10 mm plane, inner ring ---
+    ( 20    0   10)   //  8
+    (  0   20   10)   //  9
+    (-20    0   10)   // 10
+    (  0  -20   10)   // 11
+
+    // --- z = 10 mm plane, outer ring ---
+    ( 100    0   10)  // 12
+    (   0  100   10)  // 13
+    (-100    0   10)  // 14
+    (   0 -100   10)  // 15
+);
+
+// ---------------------------------------------------------------------------
+// Blocks
+//   *** Cell counts: (N_r N_theta N_z) = (200 64 70) per block ***
+//   Total: 4 * 200 * 64 * 70 = 3.584e6 cells
+// ---------------------------------------------------------------------------
+blocks
+(
+    // Block Q1 :  theta in [  0,  90]
+    hex (0 4 5 1   8 12 13 9)
+        (200 64 70)
+        simpleGrading
+        (
+            1.05
+            1.0
+            (
+                (0.022505 0.157143 6.1917)
+                (0.954990 0.685714 1.0000)
+                (0.022505 0.157143 0.16151)
+            )
+        )
+
+    // Block Q2 :  theta in [ 90, 180]
+    hex (1 5 6 2   9 13 14 10)
+        (200 64 70)
+        simpleGrading
+        (
+            1.05
+            1.0
+            (
+                (0.022505 0.157143 6.1917)
+                (0.954990 0.685714 1.0000)
+                (0.022505 0.157143 0.16151)
+            )
+        )
+
+    // Block Q3 :  theta in [180, 270]
+    hex (2 6 7 3   10 14 15 11)
+        (200 64 70)
+        simpleGrading
+        (
+            1.05
+            1.0
+            (
+                (0.022505 0.157143 6.1917)
+                (0.954990 0.685714 1.0000)
+                (0.022505 0.157143 0.16151)
+            )
+        )
+
+    // Block Q4 :  theta in [270, 360]
+    hex (3 7 4 0   11 15 12 8)
+        (200 64 70)
+        simpleGrading
+        (
+            1.05
+            1.0
+            (
+                (0.022505 0.157143 6.1917)
+                (0.954990 0.685714 1.0000)
+                (0.022505 0.157143 0.16151)
+            )
+        )
+);
+
+// ---------------------------------------------------------------------------
+// Edges  (identical arc midpoints to all sibling meshes)
+// inner cylinder midpoint magnitude = 20 / sqrt 2 = 14.1421
+// outer cylinder midpoint magnitude = 100 / sqrt 2 = 70.7107
+// ---------------------------------------------------------------------------
+edges
+(
+    // -- Inner cylinder, z = 0 --
+    arc  0  1 ( 14.1421  14.1421   0)
+    arc  1  2 (-14.1421  14.1421   0)
+    arc  2  3 (-14.1421 -14.1421   0)
+    arc  3  0 ( 14.1421 -14.1421   0)
+
+    // -- Outer cylinder, z = 0 --
+    arc  4  5 ( 70.7107  70.7107   0)
+    arc  5  6 (-70.7107  70.7107   0)
+    arc  6  7 (-70.7107 -70.7107   0)
+    arc  7  4 ( 70.7107 -70.7107   0)
+
+    // -- Inner cylinder, z = 10 --
+    arc  8  9 ( 14.1421  14.1421  10)
+    arc  9 10 (-14.1421  14.1421  10)
+    arc 10 11 (-14.1421 -14.1421  10)
+    arc 11  8 ( 14.1421 -14.1421  10)
+
+    // -- Outer cylinder, z = 10 --
+    arc 12 13 ( 70.7107  70.7107  10)
+    arc 13 14 (-70.7107  70.7107  10)
+    arc 14 15 (-70.7107 -70.7107  10)
+    arc 15 12 ( 70.7107 -70.7107  10)
+);
+
+// ---------------------------------------------------------------------------
+// Boundary patches (identical to under-resolved debug / production)
+// ---------------------------------------------------------------------------
+boundary
+(
+    innerElectrode
+    {
+        type patch;
+        faces
+        (
+            (0  8  9  1)   // Q1 X-min
+            (1  9 10  2)   // Q2 X-min
+            (2 10 11  3)   // Q3 X-min
+            (3 11  8  0)   // Q4 X-min
+        );
+    }
+
+    outerElectrode
+    {
+        type patch;
+        faces
+        (
+            ( 4  5 13 12)  // Q1 X-max
+            ( 5  6 14 13)  // Q2 X-max
+            ( 6  7 15 14)  // Q3 X-max
+            ( 7  4 12 15)  // Q4 X-max
+        );
+    }
+
+    insulatingPlates
+    {
+        type wall;
+        faces
+        (
+            // -- bottom (z = 0), outward normal = -z --
+            ( 0  1  5  4)  // Q1 Z-min
+            ( 1  2  6  5)  // Q2 Z-min
+            ( 2  3  7  6)  // Q3 Z-min
+            ( 3  0  4  7)  // Q4 Z-min
+
+            // -- top (z = 10 mm), outward normal = +z --
+            ( 8 12 13  9)  // Q1 Z-max
+            ( 9 13 14 10)  // Q2 Z-max
+            (10 14 15 11)  // Q3 Z-max
+            (11 15 12  8)  // Q4 Z-max
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

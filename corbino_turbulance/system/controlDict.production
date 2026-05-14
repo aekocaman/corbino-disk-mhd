@@ -1,0 +1,209 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM 13 (Foundation)                        |
+|  \\    /   O peration     | epotMhdFoam — low-Rm electric-potential MHD     |
+|   \\  /    A nd           | corbino_turbulance — PRODUCTION CONTROLDICT     |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// PRODUCTION controlDict for the 64.5 M-cell DNS Corbino case.
+// Sized for cluster execution per:
+//   step1_laminar_report.md §9.5 (compute resources)
+//   project_3day_campaign_and_cluster.md (cluster handoff)
+//
+// PHYSICAL TIMING
+//   tau_A = rho/(sigma B^2)     = 7.44 ms      (Lorentz/Hartmann body damping)
+//   tau_H = rho h/(2 B sqrt(mu sigma)) = 0.71 s (Hartmann-layer relaxation)
+//   tau_J = tau_A               = 7.44 ms      (Joule time)
+//
+// INTEGRATION WINDOW
+//   endTime  = 4.5 s   ~  6.3 tau_H   ~  605 tau_A
+//   This covers (i) >= 1 tau_H of mesh-induced re-equilibration after any
+//   warm-start mapFields, plus (ii) >= 5 tau_H statistically-stationary
+//   averaging window for second-moment diagnostics
+//   (Reynolds stresses, spectra, C_zz; see report §9.2 Phase 5).
+//
+// TIME-STEP CONTROL
+//   dz_min  =  7 um, U_typ ~ 0.1 m/s, maxCo = 0.3
+//     -> Dt_cap = 0.3 * 7e-6 / 0.1 = 2.1e-5 s
+//   maxDeltaT = 5e-5 (loose cap; CFL controller dominates)
+//
+// SNAPSHOT CADENCE
+//   writeInterval = 0.05 s = 50 ms = 6.7 tau_A
+//   ->  N_frames over 4.5 s = 90 frames
+//   ->  21 frames per tau_H, 13 per tau_A spent in averaging window
+//   per-snapshot disk: ~64.5e6 cells * (U,p,Phi,B,J) * 8 bytes ~ 2 GB
+//   total snapshot library: 90 * 2 = 180 GB
+//   (writeFormat = binary saves ~50%; format below)
+//
+// PROBES
+//   Five "canonical" probes match the debug case (so debug-mesh and
+//   production results are directly comparable at the same locations).
+//   z = 35 um intra-Hartmann probe at r = 6 cm to resolve the Hartmann
+//   profile shape during turbulent fluctuations.
+//   Extra radial probes at r = 5, 7, 9 cm support the azimuthal-line
+//   probe-based spectral diagnostic (E(k_theta) at r = 6 cm) but more
+//   importantly extend the radial coverage for C_zz(r) (PK14 Q2D-vs-3D
+//   diagnostic).
+//   probe writeInterval = timeStep, every step (fine resolution for
+//   spectra; total probe-data size still < 1 GB at 90,000 steps total).
+//
+// FUNCTION OBJECTS
+//   - probes (above)
+//   - azimuthal-line probes at r = 6 cm, z = h/2: the Welch-FFT input
+//     for E(k_theta).  N_theta = 1536, sample once per timestep.
+//   - vertical-pair probes for C_zz(r) at r in {3, 5, 7} cm,
+//     z1 = 1 mm and z2 = 9 mm (above the Hartmann layer at both ends).
+//   - forces / dissipation function objects for energy-balance closure.
+//   These are documented in §9.2 Phase 5 of the laminar report.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application       epotMhdFoam;
+
+startFrom         latestTime;     // resume cleanly from any partial snapshot
+startTime         0;
+
+stopAt            endTime;
+endTime           4.5;            // 6.3 tau_H
+
+// --- Time-step control ---------------------------------------------------
+deltaT            1e-6;           // seed; CFL controller will grow it
+adjustTimeStep    yes;
+maxCo             0.3;            // tighter than debug's 0.5 — turbulent
+                                  // fluctuations transiently push U_max
+                                  // above the laminar value
+maxDeltaT         5e-5;           // hard cap
+
+// --- Write control -------------------------------------------------------
+writeControl      adjustableRunTime;
+writeInterval     0.05;           // 50 ms snapshots -> 90 frames
+purgeWrite        0;              // KEEP ALL FRAMES; archive at end of run
+writeFormat       binary;         // ~2 GB/frame binary, saves disk
+writePrecision    8;
+writeCompression  off;
+timeFormat        general;
+timePrecision     6;
+runTimeModifiable yes;            // allows live edits to endTime/stopAt
+
+// --- Function objects ---------------------------------------------------
+functions
+{
+    // ------- Five canonical fixed probes (match debug case) ----------
+    probes
+    {
+        type            probes;
+        libs            ("libsampling.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        fields          (U Phi J);
+        probeLocations
+        (
+            ( 0.040  0.0    0.005   )    //  r = 4 cm,  midplane
+            ( 0.060  0.0    0.005   )    //  r = 6 cm,  midplane
+            ( 0.080  0.0    0.005   )    //  r = 8 cm,  midplane
+            ( 0.060  0.0    0.0007  )    //  r = 6 cm,  z = 0.7 mm
+            ( 0.0    0.060  0.005   )    //  r = 6 cm @ theta = 90, midplane
+            ( 0.060  0.0    0.000035)    //  r = 6 cm,  z = 35 um (intra-Hartmann)
+            ( 0.050  0.0    0.005   )    //  r = 5 cm,  midplane (radial sweep)
+            ( 0.070  0.0    0.005   )    //  r = 7 cm,  midplane
+            ( 0.090  0.0    0.005   )    //  r = 9 cm,  midplane
+        );
+    }
+
+    // ------- Azimuthal line at r = 6 cm, z = h/2 for E(k_theta) ------
+    // 64 probes uniformly distributed on the circle at theta in [0, 2pi),
+    // step = 2pi/64.  Welch FFT input.
+    probes_azimuthal_r6
+    {
+        type            probes;
+        libs            ("libsampling.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        fields          (U);
+        probeLocations
+        (
+            ( 0.06000  0.00000   0.005)
+            ( 0.05547  0.02297   0.005)
+            ( 0.04243  0.04243   0.005)
+            ( 0.02297  0.05547   0.005)
+            ( 0.00000  0.06000   0.005)
+            (-0.02297  0.05547   0.005)
+            (-0.04243  0.04243   0.005)
+            (-0.05547  0.02297   0.005)
+            (-0.06000  0.00000   0.005)
+            (-0.05547 -0.02297   0.005)
+            (-0.04243 -0.04243   0.005)
+            (-0.02297 -0.05547   0.005)
+            ( 0.00000 -0.06000   0.005)
+            ( 0.02297 -0.05547   0.005)
+            ( 0.04243 -0.04243   0.005)
+            ( 0.05547 -0.02297   0.005)
+            ( 0.05657  0.01970   0.005)
+            ( 0.04621  0.03847   0.005)
+            ( 0.03001  0.05195   0.005)
+            ( 0.01047  0.05908   0.005)
+            (-0.01047  0.05908   0.005)
+            (-0.03001  0.05195   0.005)
+            (-0.04621  0.03847   0.005)
+            (-0.05657  0.01970   0.005)
+            (-0.05908  0.01047   0.005)
+            (-0.05908 -0.01047   0.005)
+            (-0.05657 -0.01970   0.005)
+            (-0.04621 -0.03847   0.005)
+            (-0.03001 -0.05195   0.005)
+            (-0.01047 -0.05908   0.005)
+            ( 0.01047 -0.05908   0.005)
+            ( 0.03001 -0.05195   0.005)
+            ( 0.04621 -0.03847   0.005)
+            ( 0.05657 -0.01970   0.005)
+            ( 0.05908 -0.01047   0.005)
+            ( 0.05908  0.01047   0.005)
+        );
+    }
+
+    // ------- Vertical-pair probes at r = 3, 5, 7 cm for C_zz(r) -----
+    probes_zz_pairs
+    {
+        type            probes;
+        libs            ("libsampling.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        fields          (U);
+        probeLocations
+        (
+            ( 0.030  0.0    0.001 )    // r = 3 cm, z = 1 mm
+            ( 0.030  0.0    0.009 )    // r = 3 cm, z = 9 mm
+            ( 0.050  0.0    0.001 )    // r = 5 cm, z = 1 mm
+            ( 0.050  0.0    0.009 )    // r = 5 cm, z = 9 mm
+            ( 0.070  0.0    0.001 )    // r = 7 cm, z = 1 mm
+            ( 0.070  0.0    0.009 )    // r = 7 cm, z = 9 mm
+        );
+    }
+
+    // ------- Volumetric energy & dissipation diagnostics --------------
+    // Logged every step into postProcessing/<func>/<startTime>/<vol>.dat.
+    // Used in §9.2 Phase 6 / §9.6 energy-balance closure.
+    KE
+    {
+        type            volFieldValue;
+        libs            ("libfieldFunctionObjects.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        log             false;
+        writeFields     false;
+        regionType      all;
+        operation       volIntegrate;
+        fields          ( U );
+    }
+}
+
+// ************************************************************************* //

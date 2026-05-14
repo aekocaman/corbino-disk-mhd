@@ -1,0 +1,74 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM 13 (Foundation)                        |
+|  \\    /   O peration     | epotMhdFoam — low-Rm electric-potential MHD     |
+|   \\  /    A nd           | corbino_turbulance — PRODUCTION fvSchemes       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Production discretisation schemes for the 64.5 M-cell DNS.
+// Same as the laminar baseline (case_360_laminar/system/fvSchemes) plus
+// one tighter divergence scheme on div(phi,U) per turbulent-DNS practice
+// in [krasnov2012duct]: limitedLinear V 1 instead of plain linear.
+//
+// Time scheme: backward (2nd order, A-stable, OpenFOAM canonical for PISO
+// at adaptive Dt with maxCo <= 0.5).
+//
+// Laplacian and gradient schemes use the standard "Gauss linear corrected"
+// pair, which is 2nd order on hexahedral meshes and applies a non-orthogonal
+// correction at the wall clusters where the grading switches from
+// q = 1.2 to uniform.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    default                 backward;
+}
+
+gradSchemes
+{
+    default                 Gauss linear;
+    grad(p)                 Gauss linear;
+    grad(Phi)               Gauss linear;
+    grad(U)                 Gauss linear;
+}
+
+divSchemes
+{
+    default                 none;
+    div(phi,U)              Gauss limitedLinearV 1;   // bounded for turbulence
+    div(phi,B)              Gauss linear;             // not solved at low Rm
+    div(sigma*(U^B))        Gauss linear;             // Phi source
+    div((nuEff*dev2(T(grad(U)))))  Gauss linear;
+    div(phi)                Gauss linear;
+}
+
+laplacianSchemes
+{
+    default                 Gauss linear corrected;
+    laplacian(nu,U)         Gauss linear corrected;
+    laplacian(rAUf,p)       Gauss linear corrected;
+    laplacian(rAU,p)        Gauss linear corrected;
+    laplacian(sigma,Phi)    Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default                 linear;
+}
+
+snGradSchemes
+{
+    default                 corrected;
+}
+
+// ************************************************************************* //

@@ -1,0 +1,259 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Web:      www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Step-2 turbulent DNS mesh: full 360° Corbino annulus.
+// Same topology as case_360_laminar/system/blockMeshDict (4 hex blocks,
+// 16 vertices, identical patches), but with the cell count and z-grading
+// rebuilt for wall-resolved DNS at Re_a/Ha^2 ~ 1.2 (PK14 transition).
+//
+// Geometry (mm; convertToMeters 0.001):
+//   r_in  = 20 mm,  r_out = 100 mm,  h = 10 mm,  Gamma = 8
+//
+// DNS sizing target (matches step1_laminar_report.md §9.2 Phase 1):
+//   delta_H  = sqrt(mu / (sigma B^2))       ~  53  um
+//   ell_J    = sqrt(nu * tau_J)             ~  53  um   (Joule-Kolmogorov)
+//   target dz_wall  =   7  um  ( = delta_H / ~7.5, ensures 5 cells in delta_H )
+//   target bulk dz  ~ 199 um
+//   target bulk dr  ~ 133 um
+//   target r_out * dtheta  ~ 0.41 mm  (<3 * bulk dz, KZB12 aspect bound)
+//
+// "5 cells in delta_H" verified numerically: with dz_min = 7 um and q = 1.2,
+//   cum widths (um) :  7.0, 15.4, 25.5, 37.6, 52.1, 69.5
+// the 5th cell ends at 52.1 um, just below delta_H = 53 um; the 6th cell
+// crosses out.  dz_min = 10 um (informal §9.2 draft) would put only 3 cells
+// across delta_H; dz_min = 7 um restores the >=5 cells DNS criterion [KZB12].
+//
+// Cell counts per block (per quadrant):
+//   N_r = 600 ; N_theta = 384  ; N_z = 70           (medium mesh)
+//   total = 4 blocks * 600 * 384 * 70  =  6.45e7 cells
+// Coarse / fine variants (Phase 7 GCI study, §9.2 Phase 7):
+//   coarse :   N_theta = 256 per block  (=  1024 azimuthal,  4.30e7 cells)
+//   medium :   N_theta = 384 per block  (=  1536 azimuthal,  6.45e7 cells)
+//   fine   :   N_theta = 512 per block  (=  2048 azimuthal,  8.60e7 cells)
+//
+// z-grading derivation (§9.2, dz_min revised to 7 um):
+//   - 11 cells per Hartmann-wall side, geometric expansion q = 1.2,
+//     first cell = 7 um, last cell = 7*1.2^10 = 43.3 um,
+//     side span   = 7*(1.2^11 - 1)/0.2 = 225.1 um.
+//   - 48 uniform bulk cells covering 10 mm - 2*0.2251 mm = 9.550 mm,
+//     each = 199 um.   (Matches §9.2 N_z = 70 = 11 + 48 + 11.)
+//   - Multi-grading per block (sums: z-fractions 1.00000, cell-fractions 1.00000):
+//       ((0.02251 0.15714 6.1917)      // wall layer, q=1.2 stretching
+//        (0.95499 0.68571 1.0000)      // uniform bulk
+//        (0.02251 0.15714 0.16151))    // mirror wall layer
+//
+// r-grading: 1.05 : 1 from inner electrode to outer (§9.2).  Mild
+// refinement at r_in where U_theta is largest (~1/r in the laminar
+// core) and the Shercliff side-layer scales as h/sqrt(Ha) ~ 1 mm.
+//
+// theta-grading: 1.0 (uniform).  Required for FFT-friendly E(k_theta)
+// without zero-padding [Wel67].
+//
+// Mesh-quality envelope to enforce in checkMesh (§9.2 Phase 1 targets):
+//   max non-orthogonality < 60 deg
+//   max skewness          < 4
+//   max aspect ratio      < 50
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 0.001;     // dictionary entries are in millimetres
+
+// ---------------------------------------------------------------------------
+// Vertices  (identical to laminar baseline mesh)
+// ---------------------------------------------------------------------------
+vertices
+(
+    // --- z = 0 plane, inner ring (r = 20 mm) ---
+    ( 20    0    0)   //  0 : theta =   0
+    (  0   20    0)   //  1 : theta =  90
+    (-20    0    0)   //  2 : theta = 180
+    (  0  -20    0)   //  3 : theta = 270
+
+    // --- z = 0 plane, outer ring (r = 100 mm) ---
+    ( 100    0    0)  //  4 : theta =   0
+    (   0  100    0)  //  5 : theta =  90
+    (-100    0    0)  //  6 : theta = 180
+    (   0 -100    0)  //  7 : theta = 270
+
+    // --- z = 10 mm plane, inner ring ---
+    ( 20    0   10)   //  8
+    (  0   20   10)   //  9
+    (-20    0   10)   // 10
+    (  0  -20   10)   // 11
+
+    // --- z = 10 mm plane, outer ring ---
+    ( 100    0   10)  // 12
+    (   0  100   10)  // 13
+    (-100    0   10)  // 14
+    (   0 -100   10)  // 15
+);
+
+// ---------------------------------------------------------------------------
+// Blocks
+//   local x = +r , local y = +theta , local z = +z   (right-handed)
+//   simpleGrading (rRatio  thetaRatio  zMulti)
+//     rRatio     = 1.05   -> outer cell 5% larger than inner
+//     thetaRatio = 1.0    -> uniform azimuthal
+//     zMulti     = 3-segment list documented in header
+// ---------------------------------------------------------------------------
+blocks
+(
+    // Block Q1 :  theta in [  0,  90]
+    hex (0 4 5 1   8 12 13 9)
+        (600 384 70)
+        simpleGrading
+        (
+            1.05
+            1.0
+            (
+                (0.02251 0.15714 6.1917)
+                (0.95499 0.68571 1.0000)
+                (0.02251 0.15714 0.16151)
+            )
+        )
+
+    // Block Q2 :  theta in [ 90, 180]
+    hex (1 5 6 2   9 13 14 10)
+        (600 384 70)
+        simpleGrading
+        (
+            1.05
+            1.0
+            (
+                (0.02251 0.15714 6.1917)
+                (0.95499 0.68571 1.0000)
+                (0.02251 0.15714 0.16151)
+            )
+        )
+
+    // Block Q3 :  theta in [180, 270]
+    hex (2 6 7 3   10 14 15 11)
+        (600 384 70)
+        simpleGrading
+        (
+            1.05
+            1.0
+            (
+                (0.02251 0.15714 6.1917)
+                (0.95499 0.68571 1.0000)
+                (0.02251 0.15714 0.16151)
+            )
+        )
+
+    // Block Q4 :  theta in [270, 360]
+    hex (3 7 4 0   11 15 12 8)
+        (600 384 70)
+        simpleGrading
+        (
+            1.05
+            1.0
+            (
+                (0.02251 0.15714 6.1917)
+                (0.95499 0.68571 1.0000)
+                (0.02251 0.15714 0.16151)
+            )
+        )
+);
+
+// ---------------------------------------------------------------------------
+// Edges  (identical arc midpoints to the laminar mesh)
+// inner cylinder midpoint magnitude = 20 / sqrt 2 = 14.1421
+// outer cylinder midpoint magnitude = 100 / sqrt 2 = 70.7107
+// ---------------------------------------------------------------------------
+edges
+(
+    // -- Inner cylinder, z = 0 --
+    arc  0  1 ( 14.1421  14.1421   0)
+    arc  1  2 (-14.1421  14.1421   0)
+    arc  2  3 (-14.1421 -14.1421   0)
+    arc  3  0 ( 14.1421 -14.1421   0)
+
+    // -- Outer cylinder, z = 0 --
+    arc  4  5 ( 70.7107  70.7107   0)
+    arc  5  6 (-70.7107  70.7107   0)
+    arc  6  7 (-70.7107 -70.7107   0)
+    arc  7  4 ( 70.7107 -70.7107   0)
+
+    // -- Inner cylinder, z = 10 --
+    arc  8  9 ( 14.1421  14.1421  10)
+    arc  9 10 (-14.1421  14.1421  10)
+    arc 10 11 (-14.1421 -14.1421  10)
+    arc 11  8 ( 14.1421 -14.1421  10)
+
+    // -- Outer cylinder, z = 10 --
+    arc 12 13 ( 70.7107  70.7107  10)
+    arc 13 14 (-70.7107  70.7107  10)
+    arc 14 15 (-70.7107 -70.7107  10)
+    arc 15 12 ( 70.7107 -70.7107  10)
+);
+
+// ---------------------------------------------------------------------------
+// Boundary patches (identical to laminar baseline)
+//   innerElectrode   r = r_in,   patch (fixed potential, no slip)
+//   outerElectrode   r = r_out,  patch (ground V = 0,    no slip)
+//   insulatingPlates z = 0 / h,  wall  (n . J = 0, no slip)
+// ---------------------------------------------------------------------------
+boundary
+(
+    innerElectrode
+    {
+        type patch;
+        faces
+        (
+            (0  8  9  1)   // Q1 X-min
+            (1  9 10  2)   // Q2 X-min
+            (2 10 11  3)   // Q3 X-min
+            (3 11  8  0)   // Q4 X-min
+        );
+    }
+
+    outerElectrode
+    {
+        type patch;
+        faces
+        (
+            ( 4  5 13 12)  // Q1 X-max
+            ( 5  6 14 13)  // Q2 X-max
+            ( 6  7 15 14)  // Q3 X-max
+            ( 7  4 12 15)  // Q4 X-max
+        );
+    }
+
+    insulatingPlates
+    {
+        type wall;
+        faces
+        (
+            // -- bottom (z = 0), outward normal = -z --
+            ( 0  1  5  4)  // Q1 Z-min
+            ( 1  2  6  5)  // Q2 Z-min
+            ( 2  3  7  6)  // Q3 Z-min
+            ( 3  0  4  7)  // Q4 Z-min
+
+            // -- top (z = 10 mm), outward normal = +z --
+            ( 8 12 13  9)  // Q1 Z-max
+            ( 9 13 14 10)  // Q2 Z-max
+            (10 14 15 11)  // Q3 Z-max
+            (11 15 12  8)  // Q4 Z-max
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

@@ -1,0 +1,63 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2312                                 |
+|   \\  /    A nd           | Web:      www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Discretisation schemes.  Second order everywhere for the laminar baseline
+// -- upwind would smear the Hartmann layer and hide the wall-shear physics
+// we are trying to validate torque against.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    default         Euler;       // first-order implicit in time; OK for
+                                 // monotonic laminar spin-up
+}
+
+gradSchemes
+{
+    default         Gauss linear;
+}
+
+divSchemes
+{
+    default         none;                 // require explicit entries
+    div(phi,U)      Gauss linearUpwind grad(U);
+    div(phiB,B)     Gauss linear;
+    div(phi,B)      Gauss linear;
+
+    // OpenFOAM 13's mhdFoam uses div(phiB,((2*DBU)*B)) where DBU is the
+    // magnetic diffusivity.  Wildcard catches that and any future variant.
+    "div\(phiB,.*\)"        Gauss linear;
+
+    div((1|rho)*phi,p_rgh)  Gauss linear;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         corrected;
+}
+
+// ************************************************************************* //

@@ -1,0 +1,48 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  13                                    |
+|   \\  /    A nd           | Web:      www.openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Kinematic hydrodynamic pressure for the closed Corbino domain.
+//
+// In OF13's mhdFoam the momentum equation is in per-unit-mass form
+//      dU/dt + (U . nabla) U = -grad(p) + nu * laplacian(U) + (J x B)/rho
+// so p has units of m^2/s^2 (kinematic pressure = static pressure / rho).
+//
+// The domain is fully enclosed -- no inlet, no outlet -- so without a
+// Dirichlet anchor the pressure is determined only up to an additive
+// constant.  We pin p = 0 on the outer electrode (gauge choice; any single
+// patch would do).  The other walls use zeroGradient so the wall-normal
+// momentum balance is left to the solver.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];   // m^2 s^-2  (kinematic)
+
+internalField   uniform 0;
+
+boundaryField
+{
+    innerElectrode   { type zeroGradient; }
+
+    outerElectrode
+    {
+        type            fixedValue;
+        value           uniform 0;
+    }
+
+    insulatingPlates { type zeroGradient; }
+}
+
+// ************************************************************************* //
