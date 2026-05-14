@@ -18,8 +18,8 @@ FoamFile
 //
 // numberOfSubdomains
 //   - 64  : initial smoke-test on 1 node (~1.0 M cells / rank)
-//   - 128 : Phase-2 verification (~0.50 M cells / rank)
-//   - 256 : Phase-4..5 production (~0.25 M cells / rank, near-optimal)
+//   - 128 :  verification (~0.50 M cells / rank)
+//   - 256 : production (~0.25 M cells / rank, near-optimal)
 //
 // method = scotch [Pel99]: graph-partitioning, ignores patch geometry,
 // gives well-balanced subdomain volumes for unstructured-like topologies.
@@ -30,7 +30,7 @@ FoamFile
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 64;     // raise to 128/256 for production runs
+numberOfSubdomains 64;     // to be raised to 128/256 for other runs
 
 method            scotch;
 
