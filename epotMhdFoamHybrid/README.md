@@ -9,7 +9,7 @@ Low-to-moderate magnetic-Reynolds-number incompressible MHD solver for OpenFOAM 
 - **`epotMhdFoam`** — the low-Rm electric-potential formulation, in which the induced magnetic field is neglected and current density is computed from the imposed `Phi` field via Ohm's law `J = sigma (-grad(Phi) + U x B)`.
 - **Stock `mhdFoam`** — the magnetic-induction equation, which evolves the magnetic field `B` itself together with a solenoidal projection step.
 
-The hybrid solver retains `epotMhdFoam`'s electrode-driven `Phi`-Poisson solve and its Lorentz-force decomposition, *and* adds the induction equation so that `B` is now an evolved field rather than a fixed input. This makes the solver usable across the full range from low Rm (where the induction equation produces essentially nothing) up to moderate Rm ~ O(1), where the induced `B'` becomes a finite physical contribution.
+This makes the solver usable across the full range from low Rm (where the induction equation produces essentially nothing) up to moderate Rm ~ O(1), where the induced `B'` becomes a finite physical contribution.
 
 ## Equations solved (per timestep)
 
@@ -85,9 +85,9 @@ When migrating an existing `epotMhdFoam` case to this hybrid solver:
 - **`system/fvSchemes`** — add `div(phi,B)` and `div(phiB,U)` entries under `divSchemes`. `Gauss linear` is the safe default for both.
 - **`constant/physicalProperties`** — confirm `mu` (magnetic permeability) is defined. Default vacuum value: `1.2566e-6` H/m.
 
-## Validation status
+## Validation status of the code
 
-Two-stage validation campaign on the Corbino-disk debug mesh (2.3M cells, Ha = 94.88, Re_a/Ha^2 = 1.19, B_0 = 0.5 T):
+Two-stage validation  on the Corbino-disk debug mesh:
 
 ### Stage 1 — Low-Rm consistency (Rm = 0.035)
 
@@ -98,9 +98,9 @@ Run from a converged laminar baseline for 5 ms:
 - `max |div B| / |B|` bounded around `1.3e-04`, decreasing over the run.
 - No NaN, no FPE, time loop closes cleanly.
 
-### Stage 3 — Finite-Rm activation (Rm ~ 1.0)
+### Stage 2 — Finite-Rm activation (Rm ~ 1.0)
 
-Same case but with `mu` artificially scaled by 30x in `physicalProperties`, pushing Rm from 0.035 to ~1. Run for 50 ms:
+Same case but with `mu` artificially scaled by 30x in `physicalProperties`, pushing Rm from 0.035 to ~1. Has been run for 50 ms:
 
 - `max |B - B_0| / B_0 = 9.97e-03` — a 39x growth versus Stage 1.
 - The 39x growth is in close agreement with the 30x Rm scaling, consistent with leading-order linear induction theory (`|B'|/B_0 ~ Rm`).
