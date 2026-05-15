@@ -110,7 +110,7 @@ Same case but with `mu` artificially scaled by 30x in `physicalProperties`, push
 
 These results confirm the hybrid solver behaves correctly across the regimes for which it is intended.
 
-## References
+## Sources
 
 1. P. A. Davidson, *An Introduction to Magnetohydrodynamics*, Cambridge University Press (2001).
 2. U. Müller and L. Bühler, *Magnetohydrodynamics in Channels and Containers*, Springer-Verlag (2001).
