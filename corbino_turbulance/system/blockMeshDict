@@ -17,12 +17,12 @@ FoamFile
 // Step-2 turbulent DNS mesh:
 // Same topology as case_360_laminar/system/blockMeshDict (4 hex blocks,
 // 16 vertices, identical patches), but with the cell count and z-grading
-// rebuilt for wall-resolved DNS at Re_a/Ha^2 ~ 1.2 (PK14 transition).
+// rebuilt for wall-resolved DNS at Re_a/Ha^2 ~ 1.2.
 //
 // Geometry (mm; convertToMeters 0.001):
 //   r_in  = 20 mm,  r_out = 100 mm,  h = 10 mm,  Gamma = 8
 //
-// DNS sizing target (matches step1_laminar_report.md §9.2 Phase 1):
+// DNS sizing target:
 //   delta_H  = sqrt(mu / (sigma B^2))       ~  53  um
 //   ell_J    = sqrt(nu * tau_J)             ~  53  um   (Joule-Kolmogorov)
 //   target dz_wall  =   7  um  ( = delta_H / ~7.5, ensures 5 cells in delta_H )
@@ -33,7 +33,7 @@ FoamFile
 // "5 cells in delta_H" verified numerically: with dz_min = 7 um and q = 1.2,
 //   cum widths (um) :  7.0, 15.4, 25.5, 37.6, 52.1, 69.5
 // the 5th cell ends at 52.1 um, just below delta_H = 53 um; the 6th cell
-// crosses out.  dz_min = 10 um (informal §9.2 draft) would put only 3 cells
+// crosses out.  dz_min = 10 um  would put only 3 cells
 // across delta_H; dz_min = 7 um restores the >=5 cells DNS criterion [KZB12].
 //
 // Cell counts per block (per quadrant):
@@ -44,12 +44,12 @@ FoamFile
 //   medium :   N_theta = 384 per block  (=  1536 azimuthal,  6.45e7 cells)
 //   fine   :   N_theta = 512 per block  (=  2048 azimuthal,  8.60e7 cells)
 //
-// z-grading derivation (§9.2, dz_min revised to 7 um):
+// z-grading derivation:
 //   - 11 cells per Hartmann-wall side, geometric expansion q = 1.2,
 //     first cell = 7 um, last cell = 7*1.2^10 = 43.3 um,
 //     side span   = 7*(1.2^11 - 1)/0.2 = 225.1 um.
 //   - 48 uniform bulk cells covering 10 mm - 2*0.2251 mm = 9.550 mm,
-//     each = 199 um.   (Matches §9.2 N_z = 70 = 11 + 48 + 11.)
+//     each = 199 um. 
 //   - Multi-grading per block (sums: z-fractions 1.00000, cell-fractions 1.00000):
 //       ((0.02251 0.15714 6.1917)      // wall layer, q=1.2 stretching
 //        (0.95499 0.68571 1.0000)      // uniform bulk
@@ -62,7 +62,7 @@ FoamFile
 // theta-grading: 1.0 (uniform).  Required for FFT-friendly E(k_theta)
 // without zero-padding [Wel67].
 //
-// Mesh-quality envelope to enforce in checkMesh (§9.2 Phase 1 targets):
+// Mesh-quality envelope to enforce in checkMesh:
 //   max non-orthogonality < 60 deg
 //   max skewness          < 4
 //   max aspect ratio      < 50
