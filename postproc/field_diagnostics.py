@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-field_diagnostics.py — Time-resolved sanity check on the laminar
+ Sanity check on the laminar
 Corbino case.  Pulls quantitative numbers directly from the saved
-volume fields (no ParaView), at several time steps spanning the run,
+volume fields, at several time steps spanning the run,
 and compares them against the analytical predictions.
 
 For each time, reports:
@@ -14,8 +14,6 @@ For each time, reports:
     - global |U|_max and |U|_min over the internal mesh
     - bulk vs predicted ratio: U_θ_bulk / [I/(2π r h σ B)]
 
-Usage:
-    python3 field_diagnostics.py [/path/to/case]
 """
 
 import sys
