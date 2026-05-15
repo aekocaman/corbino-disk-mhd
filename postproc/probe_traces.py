@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
-probe_traces.py — Concatenate the original-run and the restart-run
+Concatenates the original-run and the restart-run
 probe histories at three radial probes (r = 4, 6, 8 cm, mid-plane,
-φ = 0). Produces four figures used for §6.1, §5.3, §6.8 of the
-report:
+φ = 0). Produces four figures:
 
-  probe_traces.png            main panel: U_θ(t) + single-exp fit
-                              (cf. §6.1, Fig A6 main panel)
+  probe_traces.png            U_θ(t) + single-exp fit
+                             
 
   probe_components.png        three stacked panels: U_θ(t), U_r(t),
                               U_z(t). U_r and U_z should be at the
                               numerical noise floor — sets the
                               axisymmetry threshold for Step-2
-                              instability detection (§6.8 (i))
+                              instability detection
 
   probe_two_exp_fit.png       same data with two-exponential fit
                                 U_θ(t) = U_∞
@@ -22,14 +21,14 @@ report:
                               Alfvén time); U_∞, A_A, A_H, τ_H are
                               the four free parameters. Reports
                               fitted τ_H per probe vs predicted
-                              τ_H = 0.71 s (§5.3, §6.8 (ii)).
+                              τ_H = 0.71 s.
 
   probe_rUtheta_collapse.png  r · U_θ(t) for all three probes
                               overlaid on one axis. Tests whether
                               the 1/r law is established
                               dynamically (curves overlie from
                               t ≳ τ_A) or only asymptotically
-                              (curves merge near τ_H) (§6.8 (iii)).
+                              (curves merge near τ_H).
 
 Usage:
     python3 probe_traces.py [/path/to/case]
