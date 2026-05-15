@@ -16,13 +16,13 @@ FoamFile
 //
 // Kinematic hydrodynamic pressure for the closed Corbino domain.
 //
-// In OF13's mhdFoam the momentum equation is in per-unit-mass form
+// Momentum equation is in the per-unit-mass form
 //      dU/dt + (U . nabla) U = -grad(p) + nu * laplacian(U) + (J x B)/rho
 // so p has units of m^2/s^2 (kinematic pressure = static pressure / rho).
 //
-// The domain is fully enclosed -- no inlet, no outlet -- so without a
+// The domain is fully enclosed so without a
 // Dirichlet anchor the pressure is determined only up to an additive
-// constant.  We pin p = 0 on the outer electrode (gauge choice; any single
+// constant.  p is set to 0 on the outer electrode (gauge choice; any single
 // patch would do).  The other walls use zeroGradient so the wall-normal
 // momentum balance is left to the solver.
 //
