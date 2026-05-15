@@ -14,13 +14,13 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// Imposed uniform axial magnetic field, B = 0.5 T zhat.
+// Uniform axial magnetic field, applied externally, B = 0.5 T along +z.
 //
 // BC convention follows the OF13 mhdFoam Hartmann tutorial:
 //   - On walls perpendicular to B (here the insulating plates at z = 0, h),
-//     fix B as a Dirichlet condition -- B does not change tangentially.
-//   - On walls parallel to B (here the cylindrical electrodes), use
-//     zeroGradient -- B is allowed to develop along the surface.
+//     fix B as a Dirichlet condition
+//   - On walls parallel to B (the cylindrical electrodes),
+//     zeroGradient condition applies
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
