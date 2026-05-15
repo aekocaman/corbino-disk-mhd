@@ -2,46 +2,6 @@
 """
 q2d_linear_stability.py — Q2D linear stability of the laminar Corbino flow.
 
-Generalized eigenvalue problem:
-
-    sigma A psi = B psi
-
-with
-    A = L_m
-    B = nu L_m^2  -  L_m / tau_H  -  i m (U_0_theta / r) L_m
-
-L_m = d^2/dr^2 + (1/r) d/dr - m^2 / r^2 is the modal Laplacian,
-psi(r) is the radial streamfunction of the m-th azimuthal mode, and
-U_0_theta(r) = K/r is the laminar Corbino base flow.
-
-Boundary conditions: clamped (psi = psi' = 0) at r_in, r_out.
-Discretization:      Chebyshev collocation on N+1 = 33 nodes.
-
-BC enforcement.
-    The clamped BCs are imposed by null-space projection: the four
-    boundary equations are assembled into a constraint matrix C of
-    shape (4, N+1), and the eigenvalue problem is projected onto the
-    null space of C.  This avoids the spurious zero eigenvalues that
-    a row-replacement scheme produces and gives the correct physical
-    spectrum directly.
-
-Outputs (under ./results/):
-    q2d_linstab.png    two-panel figure
-    q2d_linstab.md     summary markdown
-
-Expected result.
-    For the K/r base flow Omega_0 = 0 identically, so the linearized
-    vorticity equation reduces to a viscous-diffusion + Hartmann-
-    friction operator with a purely imaginary advection.  The real
-    part of sigma is therefore set by Hartmann friction alone:
-        Re(sigma_max) ~ -1/tau_H,  sigma_max * tau_A ~ -1/Ha ~ -0.0105
-    independently of Re_a/Ha^2 and m.
-
-References.
-    Sommeria & Moreau, J. Fluid Mech. 118, 507 (1982)
-    Pothérat & Klein, J. Fluid Mech. 761, 168 (2014)
-    Davidson, "Introduction to MHD", Cambridge UP 2017 §6.4
-    Trefethen, "Spectral Methods in MATLAB", SIAM 2000  (Cheb diff)
 """
 
 from __future__ import annotations
@@ -55,9 +15,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-# =====================================================================
-#  Physical constants (read from constant/physicalProperties)
-# =====================================================================
+
 RHO    = 6440.0           # kg / m^3
 NU     = 3.73e-7          # m^2 / s
 SIGMA  = 3.46e6           # S / m
@@ -73,9 +31,8 @@ TAU_A  = RHO / (SIGMA * B0**2)
 TAU_H  = HA * TAU_A
 
 
-# =====================================================================
 #  Chebyshev differentiation matrix
-# =====================================================================
+
 def cheb_diff(N: int):
     """N+1 Chebyshev points on [-1, 1] and the differentiation matrix.
 
@@ -93,11 +50,11 @@ def cheb_diff(N: int):
     return D, x
 
 
-# =====================================================================
+
 #  Eigenproblem assembly with null-space-projected BCs
-# =====================================================================
+
 def assemble_eigenproblem(m: int, U_inf: float, N: int = 32):
-    """Build (A_reduced, B_reduced) for the m-th azimuthal mode.
+"""Build (A_reduced, B_reduced) for the m-th azimuthal mode.
 
     The full (N+1) x (N+1) matrices are projected onto the null space
     of the 4-row constraint matrix C that enforces psi = psi' = 0 at
@@ -157,9 +114,9 @@ def linear_stability_q2d(m: int, U_inf: float, N: int = 32) -> float:
     return float(np.max(np.real(eigvals)))
 
 
-# =====================================================================
-#  Main
-# =====================================================================
+
+
+
 def main():
     print("Physical setup")
     print(f"  Ha     = {HA:.3f}")
@@ -233,9 +190,9 @@ def main():
                   "non-monotonic trend; no marginal stability detected.")
     print()
 
-    # =================================================================
+
     # Plot
-    # =================================================================
+
     fig, axs = plt.subplots(1, 2, figsize=(11, 4.5))
 
     # -- panel (a): sigma_max vs Re_a/Ha^2 --
@@ -267,7 +224,7 @@ def main():
     ax.grid(alpha=0.25, lw=0.5)
     ax.legend(loc="upper left", fontsize=9, framealpha=0.95)
 
-    # -- panel (b): heatmap (m, Re_a/Ha^2) --
+
     ax = axs[1]
     extent = [ratios[0] - 0.1, ratios[-1] + 0.1,
               modes[0] - 0.5,  modes[-1] + 0.5]
@@ -285,20 +242,12 @@ def main():
     plt.close(fig)
     print(f"Wrote {outdir / 'q2d_linstab.png'}")
 
-    # =================================================================
+
     # Summary markdown
-    # =================================================================
+
     summary = outdir / "q2d_linstab.md"
     with open(summary, "w") as f:
         f.write("# Q2D Linear Stability of the Laminar Corbino Flow\n\n")
-        f.write(
-            "Generalized eigenvalue solution of the Q2D Sommeria-Moreau "
-            "linearised system around the laminar Corbino base "
-            r"$\langle U_{\theta,0}\rangle_z(r) = K/r$. "
-            "Discretization: Chebyshev collocation on $N+1 = 33$ nodes; "
-            "clamped streamfunction BCs ($\\psi = \\psi' = 0$) imposed by "
-            "null-space projection of the 4-row constraint matrix.\n\n"
-        )
         f.write(f"- Hartmann number:       $Ha = {HA:.2f}$\n")
         f.write(f"- Hartmann time:         $\\tau_H = {TAU_H*1e3:.2f}$ ms\n")
         f.write(f"- Analytical prediction: "
@@ -320,30 +269,7 @@ def main():
                 f"${sigma_max:+.5f}$ | "
                 f"${dev:.2e}$ |\n"
             )
-        f.write(
-            "\n## Verdict\n\n"
-            f"At low $Re_a/Ha^2$ the dominant decay rate matches the "
-            f"Hartmann-friction scale $-1/Ha = {target:+.5f}$, as expected "
-            "from the Hermitian part of the linearised operator. As "
-            "$Re_a/Ha^2$ increases, the imaginary advection term "
-            "$-imK/r^2$ does **not** commute with $L_m$, and the "
-            "non-normal spectral shift moves $\\Re(\\sigma_{\\max})$ "
-            "monotonically toward zero. By extrapolation of the trend "
-            "across the table above, the Q2D marginal stability "
-            "condition $\\sigma_{\\max} = 0$ is approached at a "
-            "moderate $Re_a/Ha^2$ above the experimentally-observed "
-            "transition value of $\\sim 1$. Q2D therefore does carry "
-            "non-trivial linear-stability information, but the threshold "
-            "it reports does not coincide with the PK14 transition; the "
-            "discrepancy is consistent with the Pothérat-Klein "
-            "interpretation that the actual transition is a 3D "
-            "phenomenon.\n\n"
-            "The full 3D linear-stability problem in cylindrical "
-            "coordinates -- which couples the Hartmann-resolved $z$ "
-            "structure to the in-plane modal structure -- is "
-            "computationally non-trivial and is deferred to the cluster "
-            "runs of the production package.\n"
-        )
+
     print(f"Wrote {summary}")
 
 
