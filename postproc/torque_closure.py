@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-torque_closure.py — Steady-state torque-closure check for the Corbino disk.
+Steady-state torque-closure check for the Corbino disk.
 
 In steady state for the laminar Corbino flow:
 
@@ -12,20 +12,17 @@ where
     T_visc = ∫_∂V r · τ_wθ        dA     (surface integral, on insulatingPlates)
 
 Closure ratio   |T_visc / T_EM|  should be 1 ± a few percent at near-steady
-state.  Mismatch sources, in order of typical magnitude:
+state.  Mismatch sources:
 
   - residual transient (we're at 99.3% of asymptote, so expect ~1% offset)
   - non-axisymmetric numerical noise (should be << 1% on this 360° mesh)
   - wall-gradient discretisation error (we use one-sided FD into the BL)
 
-Run with the case's foamReader so paths resolve correctly.  Requires:
-
-    pip install pyvista numpy --break-system-packages
+Run with the case's foamReader so paths resolve correctly. 
 
 Usage (from the case directory):
 
-    python3 /path/to/torque_closure.py            # uses cwd as case
-    python3 /path/to/torque_closure.py /case/dir  # explicit case
+    python3 /path/to/torque_closure.py /case/dir 
 """
 
 import sys
@@ -33,16 +30,14 @@ import numpy as np
 import pyvista as pv
 from pathlib import Path
 
-# ----------------------------------------------------------------------- #
-# Constants — must match constant/physicalProperties
-# ----------------------------------------------------------------------- #
+
 RHO  = 6440.0     # kg/m^3
 NU   = 3.73e-7    # m^2/s
 MU   = RHO * NU   # dynamic viscosity, Pa·s
 
-# ----------------------------------------------------------------------- #
+
 # Helpers
-# ----------------------------------------------------------------------- #
+
 def cell_volume_field(mesh: pv.UnstructuredGrid) -> np.ndarray:
     """Per-cell volume from PyVista's compute_cell_sizes filter."""
     sized = mesh.compute_cell_sizes(volume=True, area=False, length=False)
@@ -95,13 +90,7 @@ def main(case_dir: Path):
     print(f"[load] internalMesh: {internal.n_cells} cells, "
           f"fields = {list(internal.cell_data.keys())}")
 
-    # ------------------------------------------------------------------- #
-    # Resolve the insulatingPlates block.  Different PyVista versions
-    # nest patches differently:
-    #   - multi["patch/insulatingPlates"]          (older, flat)
-    #   - multi["boundary"]["insulatingPlates"]    (newer, nested)
-    # Walk the tree and pick whichever match the name suffix.
-    # ------------------------------------------------------------------- #
+   
     def find_patch(mb, name):
         try:
             keys = list(mb.keys())
@@ -130,9 +119,9 @@ def main(case_dir: Path):
                     print(f"          - {kk!r}")
         sys.exit(1)
 
-    # ------------------------------------------------------------------- #
-    # 1. Volume integral T_EM = ∫ r · (J × B)_θ dV
-    # ------------------------------------------------------------------- #
+
+    # Volume integral T_EM = ∫ r · (J × B)_θ dV
+
     J = np.asarray(internal.cell_data["J"])
     B = np.asarray(internal.cell_data["B"])
     JxB = np.cross(J, B)                              # body force / σ-units
@@ -150,7 +139,7 @@ def main(case_dir: Path):
     print(f"[EM] T_EM = ∫ r·(JxB)_θ dV = {T_EM:+.4e} N·m")
 
     # ------------------------------------------------------------------- #
-    # 2. Wall shear torque on insulatingPlates — one-sided FD into the BL
+    # Wall shear torque on insulatingPlates
     #
     # For each wall face:
     #   - find the adjacent cell centre (nearest neighbour via KDTree)
@@ -201,9 +190,9 @@ def main(case_dir: Path):
           f"max={tau_wall_theta.max():.3e}  mean={tau_wall_theta.mean():.3e}")
     print(f"[visc] T_visc = ∫ r·τ_wθ dA = {T_visc:+.4e} N·m")
 
-    # ------------------------------------------------------------------- #
-    # 3. Closure
-    # ------------------------------------------------------------------- #
+
+    #  Closure
+
     total = T_EM + T_visc
     rel_err = abs(total) / max(abs(T_EM), abs(T_visc))
 
@@ -215,9 +204,8 @@ def main(case_dir: Path):
     print(f"  relative err = {100 * rel_err:.2f} %")
     print("=" * 60)
 
-    # ------------------------------------------------------------------- #
-    # 4. Diagnostic: split T_EM by inner-electrode vs outer-electrode "side"
-    # ------------------------------------------------------------------- #
+    # Diagnostic
+ 
     R_MID = 0.5 * (0.02 + 0.10)   # halfway between r_in and r_out
     inner_side = r_xy < R_MID
     T_EM_inner = float(np.sum(r_xy[inner_side] * JxB_theta[inner_side]
