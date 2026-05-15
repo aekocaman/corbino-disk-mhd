@@ -13,9 +13,8 @@ Description
     electrically conducting fluid driven by an applied electrostatic
     potential at the boundaries (e.g. the Corbino-disk geometry).
 
-    Suitable when Rm = mu_0 * sigma * U * L << 1, so induction of B by
-    fluid motion is negligible and B can be treated as fixed at the
-    imposed value.  The current density is
+    Suitable when Rm = mu_0 * sigma * U * L << 1, so that induction of B by
+    fluid motion is negligible and B is treated as fixed.  The current density is
 
         J = sigma * (-grad(Phi) + U x B)
 
@@ -32,7 +31,7 @@ Description
     Hartmann number, where the explicit timestep would otherwise be
     bounded by the magnetic-damping timescale tau_H ~ rho/(sigma B^2).
 
-    Extension of OpenFOAM Foundation's induction-only mhdFoam (legacy/
+    It is an modified version of OpenFOAM Foundation's induction-only mhdFoam (legacy/
     electromagnetics).  The induction equation, the magnetic-pressure
     Poisson step, and the BPISO loop are removed; a Phi Poisson equation
     is added; and the Maxwell-stress force terms in UEqn are replaced by
