@@ -9,10 +9,9 @@ Application
     epotMhdFoamHybrid
 
 Description
-    Hybrid epotMhdFoam-mhdFoam solver: the low-Rm electric-potential
-    formulation of epotMhdFoam combined with the induction equation of
+    Hybrid epotMhdFoam-mhdFoam solver: epotMhdFoam combined with the induction equation of
     stock mhdFoam.  Suitable for MHD flows ranging from low to moderate
-    magnetic Reynolds number (Rm <~ O(1)).
+    magnetic Reynolds number (Rm <~ O(1)). Not appropiate for High Rm, like in the Earth's core.
 
     Equations solved (per timestep):
 
