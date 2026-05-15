@@ -10,9 +10,8 @@ Foundation 13's `mhdFoam` solves only the induction equation for B and uses
 the resulting Maxwell stress as the body force on the fluid. That requires
 B to have non-zero curl in the fluid (so J = curl(B)/mu_0 is non-zero), which
 is true for some Hartmann-channel setups but **not** for a Corbino disk with
-a uniform applied B and current driven by an electrode potential V. In that
-configuration the original solver produces no body force at all, no flow,
-and nothing useful (confirmed empirically: 8 wall-clock hours yielded
+a uniform applied B and current driven by an electrode potential V. In our
+configuration the original solver produced no body force at all (confirmed empirically: an unfortunate 8 wall-clock hours yielded
 U ~ 1e-13 m/s).
 
 This solver solves a Poisson equation for the electric potential Phi,
@@ -20,9 +19,7 @@ constructs the current density J = sigma * (-grad(Phi) + U x B), and uses
 J x B directly as the Lorentz force in the momentum equation. B is treated
 as fixed at the imposed value (low-Rm: induction is negligible).
 
-Validity range: Rm = mu_0 * sigma * U * L << 1. For Galinstan in your
-geometry: Rm ~ 4*pi*1e-7 * 3.46e6 * 0.1 * 0.08 ~ 0.035, well within the
-low-Rm regime.
+Validity range: Rm = mu_0 * sigma * U * L << 1. 
 
 ## Files
 
@@ -37,7 +34,7 @@ epotMhdFoam/
     PhiEqn.H                electric-potential Poisson solve
 ```
 
-## Install and build (in WSL)
+## Installation in WSL
 
 ```bash
 # 1. Place the source in the user solver directory
