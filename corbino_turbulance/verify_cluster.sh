@@ -16,19 +16,11 @@
 #      5.  probes and volFieldValue function objs   (post-processing chain)
 #      6.  reconstructPar of the final snapshot     (single-domain output)
 #
-#  If this demo passes, the cluster's MPI stack, OpenFOAM 13 build,
+#  If this demo passes,  OpenFOAM 13 is built,
 #  epotMhdFoam binary, and our case files all interoperate correctly.
 #  If it fails, the failure mode tells us exactly which Tier-C item
 #  (cluster module name, MPI flavour, path) needs fixing -- well before
 #  any multi-thousand-core-hour production submission.
-#
-#  WALL-CLOCK BUDGET
-#  -----------------
-#  Mesh build                : <  1 min
-#  decomposePar              : <  1 min
-#  Solver (~10 timesteps)    : <  5 min on 16 ranks
-#  reconstructPar            : <  2 min
-#  Total                     : <~10 min on 1 cluster node, 16 cores
 #
 #  USAGE
 #  -----
