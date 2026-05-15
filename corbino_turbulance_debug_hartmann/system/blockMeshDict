@@ -14,26 +14,17 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// HARTMANN-RESOLVED LAPTOP MESH for the Step-2 turbulent DNS case
-// (RAM-CONSTRAINED REVISION).
+// HARTMANN-RESOLVED LAPTOP MESH, preperation for the turbulent DNS 
 //
 //   This mesh replaces the original 200x96x70-per-block design after the
 //   stress test on that mesh revealed swap thrashing on a 7.6 GiB laptop:
 //   the 5.376e6-cell working set (~6.2 GiB) overflowed into swap and per-
 //   step wall clock blew up by ~10x.  This revision drops N_theta from 96
-//   to 64 (-33% cells) to bring the working set comfortably inside RAM.
+//   to 64 (-33% cells).
 //
-//   Total cells now: 4 * 200 * 64 * 70 = 3.584e6  (~4.1 GiB working set)
+//   Total cells now: 4 * 200 * 64 * 70 = 3.584e6 
 //
-//   Physics consequences of the N_theta cut:
-//     - Azimuthal cell width at r_out:
-//         96 -> 64 changes Delta_theta * r_out from 1.64 mm to 2.45 mm.
-//     - Maximum resolvable azimuthal mode in full 360 deg annulus
-//         (4 quadrant blocks) drops from k_theta_max = 192 to k_theta_max
-//         = 128.  At our 5 mm integral scale, the perturbation peaks
-//         around k_theta ~ 75 (depending on r), so we still resolve the
-//         peak with ~50% margin to k_theta_max.
-//     - Hartmann layer resolution UNCHANGED (still 11 wall cells per side
+//   Hartmann layer resolution, unchanged (still 11 wall cells per side
 //         clustered at Delta_z_min = 7 um, ~8 cells inside delta_H).
 //
 //   Aspect ratio at the worst (corner) cell:
@@ -42,32 +33,19 @@ FoamFile
 //   The cell-determinant-warning floor will tighten slightly, but we
 //   already accepted that warning class as a known, intentional feature.
 //
-// Geometry (mm; convertToMeters 0.001) -- unchanged:
+// Geometry (mm; convertToMeters 0.001), unchanged:
 //   r_in  = 20 mm,  r_out = 100 mm,  h = 10 mm,  Gamma = 8
 //
-// z-grading -- unchanged from the 96-theta version:
+// z-grading -- unchanged
 //   dz_min  =   7  um   (>= 5 cells across delta_H = 53 um, q = 1.2)
 //   bulk dz ~ 199  um
 //   Wall layer: 11 cells per side, q = 1.2, side span 225 um
 //   Bulk:       48 uniform cells x 199 um
 //   Total N_z = 70
-//   Multi-grading per block (z-fractions, cell-fractions, expansion ratios):
-//     wall (bottom):  z = 0.022505,  cells = 0.157143,  expansion = 6.1917
-//     bulk:           z = 0.954990,  cells = 0.685714,  expansion = 1.0000
-//     wall (top):     z = 0.022505,  cells = 0.157143,  expansion = 0.16151
 //
 // r-grading: 1.05 : 1   (unchanged)
 // theta-grading: 1.0    (uniform; FFT-friendly)
 //
-// Time-step budget (after Hartmann resolution):
-//   maxCo = 0.5, dz_min = 7 um, U_typ ~ 0.1 m/s (settled laminar)
-//   ->   Dt_cap ~ 3.5e-5 s
-//
-// Wall-clock budget on 8 ranks of an 8-GiB-RAM laptop, no swap:
-//   - per-step wall clock: ~5-10 s/step  (vs 78 s in the swap-bound run)
-//   - laminar baseline 0 -> 0.5 s : ~14000 steps  -> ~ 14-20 hours
-//     (still an overnight job)
-//   - 50 ms perturbation restart   : ~1500 steps   -> ~ 2-4 hours
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
