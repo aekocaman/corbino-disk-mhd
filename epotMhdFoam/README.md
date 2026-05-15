@@ -38,9 +38,8 @@ epotMhdFoam/
 
 ```bash
 # 1. Place the source in the user solver directory
-mkdir -p ~/OpenFOAM/reybo78-13/applications/solvers
-cp -r /mnt/c/Users/user/Documents/Claude/Projects/Turbulance\ Instabilities\ of\ a\ conducting\ fluid\ in\ 3-D\ Corbino\ Geomtry/epotMhdFoam \
-      ~/OpenFOAM/reybo78-13/applications/solvers/
+mkdir -p 
+cp -r 
 
 # 2. Source the OpenFOAM 13 environment if not already in your bashrc
 source /opt/openfoam13/etc/bashrc
@@ -49,21 +48,9 @@ source /opt/openfoam13/etc/bashrc
 cd ~/OpenFOAM/reybo78-13/applications/solvers/epotMhdFoam
 wmake
 
-# 4. Confirm the binary
-which epotMhdFoam
-# expected: ~/OpenFOAM/reybo78-13/platforms/linux64GccDPInt32Opt/bin/epotMhdFoam
+
 ```
 
-If `wmake` fails, the typical first culprits and fixes:
-
-- **Header not found**: a Foundation API header path is different from the
-  guess in `Make/options`. Add the missing include directory to `EXE_INC`.
-- **Undefined symbol**: a runtime library is missing. Add it to `EXE_LIBS`
-  with `-l<libname>`.
-- **`fvm::Sp` overload**: if the compiler complains about
-  `fvm::Sp(volScalarField, volVectorField)`, replace it with the equivalent
-  explicit form `-= sigmaBsqByRho * U` and remove the `fvm::Sp` line.
-  This sacrifices the implicit-damping benefit but compiles trivially.
 
 ## Run the case
 
