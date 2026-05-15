@@ -76,14 +76,13 @@ wmake
 
 The executable lands in `$FOAM_USER_APPBIN/epotMhdFoamHybrid`.
 
-## Required case-file additions (vs. plain epotMhdFoam)
+## Additionaly Required case-files w.r.t. plain epotMhdFoam
 
-When migrating an existing `epotMhdFoam` case to this hybrid solver:
 
-- **`0/pB`** — magnetic-pressure scalar field. Dimensions `[1 1 -2 0 0 -1 0]` (T·m). Suggested BCs: zero-gradient at insulating walls and inner electrode, `fixedValue uniform 0` at one electrode (anchors the projection nullspace). Initial value: `uniform 0`.
-- **`system/fvSolution`** — add `pB` and `pBFinal` blocks (GAMG with low tolerance) and a `B` block (PBiCGStab / DILU). The exact tunings used in the validation campaign are in the project case directories.
-- **`system/fvSchemes`** — add `div(phi,B)` and `div(phiB,U)` entries under `divSchemes`. `Gauss linear` is the safe default for both.
-- **`constant/physicalProperties`** — confirm `mu` (magnetic permeability) is defined. Default vacuum value: `1.2566e-6` H/m.
+- **`0/pB`** — magnetic-pressure scalar field. Dimensions `[1 1 -2 0 0 -1 0]` (T·m).  BCs: zero-gradient at insulating walls and inner electrode, `fixedValue uniform 0` at one electrode (anchors the projection nullspace). Initial value: `uniform 0`.
+- **`system/fvSolution`** — added `pB` and `pBFinal` blocks (GAMG with low tolerance) and a `B` block (PBiCGStab / DILU). 
+- **`system/fvSchemes`** — added `div(phi,B)` and `div(phiB,U)` entries under `divSchemes`. `Gauss linear` is the safe default for both.
+- **`constant/physicalProperties`** , `mu` (magnetic permeability) was defined. Default vacuum value: `1.2566e-6` H/m.
 
 ## Validation status of the code
 
