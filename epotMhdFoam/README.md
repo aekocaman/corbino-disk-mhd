@@ -54,9 +54,8 @@ wmake
 
 ## Run the case
 
-The existing `case_360_laminar/` is essentially compatible — it already has
-`0/Phi` with the right BCs, `system/fvSolution` already has a Phi solver
-block. Two changes are needed:
+The existing `case_360_laminar/` 's `0/Phi` and `system/fvSolution`  are essentially compatible.
+ Two changes are needed:
 
 1. **`system/fvSchemes`**: add divergence and laplacian schemes for the new
    terms if not already present:
@@ -76,33 +75,10 @@ block. Two changes are needed:
 2. **Run the new solver instead of `mhdFoam`**:
 
        cd ~/OpenFOAM/reybo78-13/run/case_360_laminar
-       # remove old snapshots (they were physics-meaningless anyway)
+       #  to remove old snapshots 
        foamListTimes -rm
        # restart from t=0
        nohup epotMhdFoam > log.epotMhdFoam 2>&1 &
        echo $! > epotMhdFoam.pid
 
-## Sanity checks once running
 
-Within the first few timesteps:
-
-```bash
-grep "Solving for Phi" log.epotMhdFoam | tail -5
-# Should now appear -- proves the Phi equation is being integrated.
-
-grep "Solving for U" log.epotMhdFoam | tail -5
-# Initial residuals should grow into ~1e-3 to 1e-2 range
-# (vs the 1e-5 noise floor of the old mhdFoam runs).
-
-cat postProcessing/probes/0/U | head -30
-# U at the midplane probes should reach ~mm/s within ms.
-```
-
-Once steady state is reached, the closure check:
-
-```
-EM torque on inner electrode  +  EM torque on outer electrode
-                          =  viscous torque on insulating plates
-```
-
-(both signs flipped) should hold to within ~1%.
