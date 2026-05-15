@@ -13,14 +13,11 @@ Hartmann number based on h/2.  At each radius U_∞ scales as 1/r
 (Corbino current J_r ∝ 1/r), so the family of curves over r tests
 both the boundary-layer shape and the radial scaling at once.
 
-For this case:  h = 10 mm,  Ha = 95,  δ_H ≈ 53 μm.
+For our case:  h = 10 mm,  Ha = 95,  δ_H ≈ 53 μm.
 
 Outputs (saved to the case directory):
-  - hartmann_profile_r{NN}cm.csv       — one per r in R_LIST
-  - hartmann_profile.png               — combined figure (one row per r)
-
-Usage:
-    python3 hartmann_profile.py [/path/to/case]
+  - hartmann_profile_r{NN}cm.csv       
+  - hartmann_profile.png               
 """
 
 import sys
@@ -28,9 +25,7 @@ import numpy as np
 import pyvista as pv
 from pathlib import Path
 
-# ----------------------------------------------------------------------- #
-# Physical constants — must match constant/physicalProperties + 0/B
-# ----------------------------------------------------------------------- #
+
 RHO     = 6440.0      # kg/m³
 NU      = 3.73e-7     # m²/s
 MU      = RHO * NU    # dynamic viscosity, Pa·s
