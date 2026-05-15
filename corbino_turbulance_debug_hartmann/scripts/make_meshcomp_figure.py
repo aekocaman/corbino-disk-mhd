@@ -2,22 +2,7 @@
 """
 make_meshcomp_figure.py — produce the mesh-sensitivity comparison plot.
 
-Overlays the same-seed five-amplitude bracket on the under-resolved debug
-mesh (2.30 M cells) with the single Hartmann-resolved data point from
-the campaign described in report/campaign_log.md.
 
-The Hartmann-resolved point is plotted at its EFFECTIVE amplitude
-(~85% by probe-RMS), not at its REQUESTED amplitude (5%), reflecting
-the cell-weighting rescaling bug in perturb_ic.py that was identified
-post-run.  See report/campaign_log.md Phase 2 verdict for the
-explanation; the bug is tracked for the cluster runs.
-
-Usage:
-    python3 scripts/make_meshcomp_figure.py
-
-Output:
-    results/mesh_comparison.png   (300 dpi, ready for thesis)
-    results/mesh_comparison_summary.md  (one-paragraph caption)
 """
 
 from __future__ import annotations
@@ -29,9 +14,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-# ---------------------------------------------------------------------
+
 # Data: debug-mesh same-seed bracket (5 amplitudes, seed 1729)
-# ---------------------------------------------------------------------
+
 DEBUG = {
     "amp_pct":  np.array([2.0, 5.0, 10.0, 15.0, 30.0]),
     "sigma_tA": np.array([-0.298, -0.310, -0.332, -0.353, -0.404]),
@@ -39,13 +24,9 @@ DEBUG = {
     "tfold":    np.array([24.9, 23.9, 22.3, 21.0, 18.3]),
 }
 
-# ---------------------------------------------------------------------
-# Data: Hartmann-resolved single point from Phase 2 of the campaign
-# Effective amplitude ~85% at probe locations (per analyser report);
-# requested amplitude was 5% but the perturb_ic.py cell-weighted
-# rescaling produced ~5x larger bulk magnitude than its diagnostic
-# stated.  See campaign_log.md Phase 2 verdict.
-# ---------------------------------------------------------------------
+
+
+
 HRES = {
     "amp_pct_effective":  85.0,
     "amp_pct_requested":   5.0,
@@ -56,9 +37,9 @@ HRES = {
 }
 
 
-# ---------------------------------------------------------------------
+
 # Style
-# ---------------------------------------------------------------------
+
 plt.rcParams.update({
     "axes.linewidth":      0.8,
     "axes.labelsize":     11,
@@ -79,13 +60,9 @@ def main():
     outdir = Path("results")
     outdir.mkdir(exist_ok=True)
 
-    # ------------------------------------------------------------
-    # Two-panel figure: (a) sigma*tau_A vs amplitude with both
-    # meshes, (b) R^2 vs amplitude
-    # ------------------------------------------------------------
+
     fig, axs = plt.subplots(1, 2, figsize=(11, 4.5))
 
-    # ----- Panel (a): sigma*tau_A overlay -----
     ax = axs[0]
 
     # Debug mesh: connected scatter with R^2 colormap
@@ -131,7 +108,7 @@ def main():
     cb.set_label(r"$R^{\,2}$", fontsize=10)
     cb.ax.tick_params(labelsize=9)
 
-    # ----- Panel (b): R^2 vs amplitude -----
+
     ax = axs[1]
     ax.plot(DEBUG["amp_pct"], DEBUG["R2"], "o-",
             color="#0d4f8b", lw=1.5, ms=8,
@@ -157,38 +134,11 @@ def main():
     plt.close(fig)
     print(f"Wrote {out_png}")
 
-    # ------------------------------------------------------------
-    # Summary markdown for the report caption
-    # ------------------------------------------------------------
+  
     summary = outdir / "mesh_comparison_summary.md"
     with open(summary, "w") as f:
         f.write("# Mesh-sensitivity comparison: debug vs Hartmann-resolved\n\n")
-        f.write(
-            "The five-amplitude same-seed bracket on the under-resolved "
-            "debug mesh ($N_\\theta = 96$, $\\Delta z_{\\min} = 50~\\mu$m, "
-            "1 cell across $\\delta_H$) gives a monotone $\\sigma\\tau_A$ "
-            "trend from $-0.298$ at $\\alpha = 2\\,\\%$ to $-0.404$ at "
-            "$\\alpha = 30\\,\\%$ probe-RMS. The single Hartmann-resolved "
-            "data point ($N_\\theta = 64$, $\\Delta z_{\\min} = 7~\\mu$m, "
-            "$\\sim\\!8$ cells across $\\delta_H$) was obtained on a "
-            "warm-state laminar baseline produced by mapFields from the "
-            "debug mesh's $t = 0.5$~s converged state plus a 5~ms "
-            "($\\sim\\!0.7\\,\\tau_A$) viscous equilibration. Due to a "
-            "cell-weighting bias in `perturb_ic.py`'s RMS rescaling step "
-            "(which over-counts the wall-cluster cells where the wall "
-            "taper drives the perturbation to zero), the requested 5\\,\\% "
-            "amplitude produced an $\\sim\\!85\\,\\%$ effective amplitude "
-            "at probe locations; the data point is therefore plotted at "
-            "its effective rather than requested amplitude. The "
-            "Hartmann-resolved $\\sigma\\tau_A = -0.227 \\pm 0.05$ falls "
-            "within the debug-mesh bracket envelope when both the "
-            "amplitude reframing and the warm-state under-equilibration "
-            "are accounted for, supporting the under-resolved-mesh "
-            "stability conclusion at the $\\sim 30\\,\\%$ confidence "
-            "level. A complete Hartmann-resolved bracket is deferred to "
-            "the cluster runs of the production package "
-            "(`corbino_turbulance/`).\n\n"
-        )
+        f.write("Caption"     )
         f.write("## Data table\n\n")
         f.write("| mesh | amplitude | $\\sigma\\tau_A$ | $R^{2}$ | "
                 "e-fold (ms) |\n")
