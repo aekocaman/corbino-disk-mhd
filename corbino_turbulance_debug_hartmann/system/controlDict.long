@@ -14,21 +14,17 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //
-// LONG-RUN controlDict for the Hartmann-resolved sibling case.
 //
-//   Purpose: produce a Hartmann-resolved laminar baseline at t = 0.5 s on
+//   Purpose: To produce a Hartmann-resolved laminar baseline at t = 0.5 s on
 //   the 5.376e6-cell sibling mesh, matching the protocol of the under-
-//   resolved debug case.  Will serve as the seed state for the Hartmann-
+//   resolved debug case.  Shoulg serve as the seed state for the upcoming Hartmann-
 //   resolved perturbation bracket.
 //
 //   Key differences vs corbino_turbulance_debug/system/controlDict.long:
 //
 //     - maxDeltaT lowered to 5e-5  (was 5e-4).  At dz_min = 7 um and
 //       U_typ ~ 0.1 m/s, the convective Courant condition with maxCo = 0.5
-//       yields Dt_cap ~ 3.5e-5 s.  Setting maxDeltaT = 5e-5 keeps the
-//       hard cap a little above the convective cap so the CFL controller
-//       continues to drive Dt; if Dt ever saturates at maxDeltaT, the
-//       solver is signalling the cap is too low.
+//       yields Dt_cap ~ 3.5e-5 s.  
 //
 //     - deltaT seed reduced to 1e-6 to match the Hartmann-resolved
 //       smaller cells; the controller will grow it to ~3.5e-5 within
@@ -39,19 +35,8 @@ FoamFile
 //       ~210 MB = ~10.5 GB.
 //
 //     - probes writeInterval bumped to 50 (was 1 in the under-resolved
-//       perturb run, 1 in long run).  At Dt ~ 3e-5 that's 1.5 ms
-//       per sample -- enough resolution to capture the tau_A = 7.4 ms
-//       dynamics with ~5 samples per tau_A, while keeping the probe
-//       file size under 200 MB.  Restore writeInterval 1 for any
-//       perturbation run on this mesh.
+//       perturb run, 1 in long run).  
 //
-//   Wall-clock estimate (8 ranks, GAMG-Phi):
-//     ~0.5 s / 3e-5 s per step = ~17000 steps
-//     ~2 s / step (memory-bandwidth-limited at 5.4 M cells)
-//     ->  ~ 7-9 hours total.   Overnight job.
-//
-//   Disk budget:
-//     50 snapshots * ~210 MB/snapshot (binary, 8 ranks) ~ 10.5 GB.
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
